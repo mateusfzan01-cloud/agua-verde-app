@@ -1,12 +1,46 @@
 import { Routes, Route } from 'react-router-dom'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import Viagens from './components/Viagens'
 import NovaViagem from './components/NovaViagem'
 import DetalheViagem from './components/DetalheViagem'
 import Motoristas from './components/Motoristas'
+import Login from './components/Login'
+import MotoristaApp from './components/MotoristaApp'
 
-function App() {
+function AppContent() {
+  const { user, perfil, loading } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner"></div>
+        <p>Carregando...</p>
+      </div>
+    )
+  }
+
+  // Não logado -> tela de login
+  if (!user) {
+    return <Login />
+  }
+
+  // Sem perfil ainda -> aguardar
+  if (!perfil) {
+    return (
+      <div className="loading-screen">
+        <p>Configurando perfil...</p>
+      </div>
+    )
+  }
+
+  // Motorista -> app mobile
+  if (perfil.tipo === 'motorista') {
+    return <MotoristaApp />
+  }
+
+  // Admin ou Gerente -> app desktop
   return (
     <div className="app-container">
       <Sidebar />
@@ -20,6 +54,14 @@ function App() {
         </Routes>
       </main>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
 

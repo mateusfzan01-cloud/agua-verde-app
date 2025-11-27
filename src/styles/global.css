@@ -782,3 +782,532 @@ body {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* Loading Screen */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 16px;
+  color: var(--cinza-texto);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--cinza-medio);
+  border-top-color: var(--verde-claro);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Login */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--verde-escuro) 0%, #145430 100%);
+  padding: 20px;
+}
+
+.login-card {
+  background: white;
+  border-radius: 16px;
+  padding: 40px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-logo {
+  width: 180px;
+  height: auto;
+  margin-bottom: 24px;
+}
+
+.login-header h1 {
+  font-size: 20px;
+  color: var(--preto);
+  font-weight: 600;
+}
+
+.login-erro {
+  background: #ffebee;
+  color: #c62828;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.login-card .form-group {
+  margin-bottom: 20px;
+}
+
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  margin-top: 8px;
+}
+
+/* ========== MOTORISTA APP (Mobile) ========== */
+.motorista-app {
+  min-height: 100vh;
+  background: var(--cinza-claro);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.motorista-header {
+  background: var(--verde-escuro);
+  color: white;
+  padding: 20px;
+}
+
+.motorista-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.motorista-logo {
+  height: 36px;
+  width: auto;
+}
+
+.motorista-logout {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.motorista-logout svg {
+  width: 22px;
+  height: 22px;
+  stroke: white;
+  stroke-width: 2;
+  fill: none;
+}
+
+.motorista-greeting {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.motorista-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--verde-claro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.motorista-greeting h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.motorista-greeting p {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.motorista-content {
+  padding: 20px;
+}
+
+.motorista-date-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.motorista-date-nav button {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--cinza-medio);
+  background: white;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.motorista-date-nav button svg {
+  width: 20px;
+  height: 20px;
+  stroke: var(--cinza-texto);
+  stroke-width: 2;
+  fill: none;
+}
+
+.motorista-date-display {
+  text-align: center;
+}
+
+.motorista-date-day {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--verde-escuro);
+  text-transform: capitalize;
+}
+
+.motorista-date-full {
+  font-size: 13px;
+  color: var(--cinza-texto);
+  text-transform: capitalize;
+}
+
+.motorista-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.motorista-summary-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.motorista-summary-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--verde-escuro);
+}
+
+.motorista-summary-label {
+  font-size: 11px;
+  color: var(--cinza-texto);
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.motorista-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--verde-escuro);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.motorista-trip-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.motorista-trip-card.current {
+  border: 2px solid var(--verde-claro);
+}
+
+.motorista-trip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.motorista-trip-time {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--verde-escuro);
+}
+
+.motorista-trip-status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.motorista-trip-route {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.motorista-route-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 4px;
+}
+
+.motorista-route-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--verde-claro);
+  border: 2px solid var(--verde-escuro);
+}
+
+.motorista-route-connector {
+  width: 2px;
+  height: 28px;
+  background: var(--cinza-medio);
+  margin: 4px 0;
+}
+
+.motorista-route-dot.end {
+  background: var(--verde-escuro);
+}
+
+.motorista-route-details {
+  flex: 1;
+}
+
+.motorista-route-point {
+  margin-bottom: 12px;
+}
+
+.motorista-route-point:last-child {
+  margin-bottom: 0;
+}
+
+.motorista-route-label {
+  font-size: 11px;
+  color: var(--cinza-texto);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.motorista-route-value {
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.motorista-passenger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  background: var(--cinza-claro);
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.motorista-passenger-name {
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.motorista-passenger-count {
+  font-size: 13px;
+  color: var(--cinza-texto);
+}
+
+.motorista-passenger-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.motorista-action-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.motorista-action-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke: white;
+  stroke-width: 2;
+  fill: none;
+}
+
+.motorista-action-btn.phone {
+  background: var(--verde-claro);
+}
+
+.motorista-action-btn.whatsapp {
+  background: #25D366;
+}
+
+.motorista-flight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #e3f2fd;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.motorista-flight svg {
+  width: 20px;
+  height: 20px;
+  stroke: #1976d2;
+  stroke-width: 2;
+  fill: none;
+}
+
+.motorista-flight span {
+  font-size: 14px;
+  color: #1976d2;
+  font-weight: 500;
+}
+
+.motorista-trip-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.motorista-trip-actions.single {
+  grid-template-columns: 1fr;
+}
+
+.motorista-btn {
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  transition: all 0.2s;
+}
+
+.motorista-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+}
+
+.motorista-btn.primary {
+  background: var(--verde-claro);
+  color: white;
+}
+
+.motorista-btn.secondary {
+  background: white;
+  color: var(--cinza-texto);
+  border: 1px solid var(--cinza-medio);
+}
+
+.motorista-btn.success {
+  background: var(--verde-escuro);
+  color: white;
+}
+
+.motorista-btn.warning {
+  background: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffcc80;
+}
+
+.motorista-loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--cinza-texto);
+}
+
+.motorista-empty {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.motorista-empty svg {
+  width: 64px;
+  height: 64px;
+  stroke: var(--cinza-medio);
+  stroke-width: 1.5;
+  fill: none;
+  margin-bottom: 16px;
+}
+
+.motorista-empty h3 {
+  font-size: 16px;
+  color: var(--preto);
+  margin-bottom: 8px;
+}
+
+.motorista-empty p {
+  font-size: 14px;
+  color: var(--cinza-texto);
+}
+
+.motorista-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.motorista-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.motorista-modal h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--verde-escuro);
+  margin-bottom: 20px;
+}
+
+.motorista-modal .form-group {
+  margin-bottom: 16px;
+}
+
+.motorista-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.motorista-modal-actions .motorista-btn {
+  flex: 1;
+}
