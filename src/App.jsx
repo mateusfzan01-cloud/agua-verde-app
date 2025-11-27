@@ -8,6 +8,7 @@ import DetalheViagem from './components/DetalheViagem'
 import Motoristas from './components/Motoristas'
 import Login from './components/Login'
 import MotoristaApp from './components/MotoristaApp'
+import Perfil from './components/Perfil'
 
 function AppContent() {
   const { user, perfil, loading } = useAuth()
@@ -51,6 +52,7 @@ function AppContent() {
           <Route path="/viagens/nova" element={<NovaViagem />} />
           <Route path="/viagens/:id" element={<DetalheViagem />} />
           <Route path="/motoristas" element={<Motoristas />} />
+          <Route path="/perfil" element={<Perfil />} />
         </Routes>
       </main>
     </div>

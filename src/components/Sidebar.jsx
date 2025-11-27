@@ -49,11 +49,27 @@ function Sidebar() {
       </ul>
 
       <div className="user-info">
-        <div className="user-avatar">JC</div>
-        <div className="user-details">
-          <div className="user-name">João Carlos</div>
-          <div className="user-role">Administrador</div>
-        </div>
+       <div className="user-info">
+  <NavLink to="/perfil" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', color: 'white', flex: 1 }}>
+    <div className="user-avatar">{getIniciais(perfil?.nome)}</div>
+    <div className="user-details">
+      <div className="user-name">{perfil?.nome || 'Usuário'}</div>
+      <div className="user-role">{perfil?.tipo === 'admin' ? 'Administrador' : 'Gerente'}</div>
+    </div>
+  </NavLink>
+  <button onClick={logout} style={{
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '8px'
+  }}>
+    <svg viewBox="0 0 24 24" style={{ width: 20, height: 20, stroke: 'rgba(255,255,255,0.7)', strokeWidth: 2, fill: 'none' }}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+  </button>
+</div>
       </div>
     </aside>
   )
