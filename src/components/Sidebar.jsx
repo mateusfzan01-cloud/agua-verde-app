@@ -1,6 +1,13 @@
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 function Sidebar() {
+  const { perfil, logout } = useAuth()
+
+  function getIniciais(nome) {
+    return nome?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??'
+  }
+
   return (
     <aside className="sidebar">
       <div className="logo-container">
@@ -8,10 +15,10 @@ function Sidebar() {
           <polygon points="30,10 50,50 30,40" fill="#4cb963"/>
           <polygon points="30,10 10,50 30,40" fill="#1a5c38"/>
           <text x="60" y="32" fill="white" fontSize="18" fontWeight="bold" fontFamily="Inter, sans-serif">
-            ÁGUA <tspan fill="#4cb963">VERDE</tspan>
+            AGUA <tspan fill="#4cb963">VERDE</tspan>
           </text>
           <text x="60" y="46" fill="rgba(255,255,255,0.7)" fontSize="8" fontFamily="Inter, sans-serif" letterSpacing="1">
-            VIAGENS &amp; RECEPTIVOS
+            VIAGENS E RECEPTIVOS
           </text>
         </svg>
       </div>
@@ -49,27 +56,25 @@ function Sidebar() {
       </ul>
 
       <div className="user-info">
-       <div className="user-info">
-  <NavLink to="/perfil" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', color: 'white', flex: 1 }}>
-    <div className="user-avatar">{getIniciais(perfil?.nome)}</div>
-    <div className="user-details">
-      <div className="user-name">{perfil?.nome || 'Usuário'}</div>
-      <div className="user-role">{perfil?.tipo === 'admin' ? 'Administrador' : 'Gerente'}</div>
-    </div>
-  </NavLink>
-  <button onClick={logout} style={{
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '8px'
-  }}>
-    <svg viewBox="0 0 24 24" style={{ width: 20, height: 20, stroke: 'rgba(255,255,255,0.7)', strokeWidth: 2, fill: 'none' }}>
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-      <polyline points="16 17 21 12 16 7"/>
-      <line x1="21" y1="12" x2="9" y2="12"/>
-    </svg>
-  </button>
-</div>
+        <NavLink to="/perfil" style={{ display: 'flex', alignItems: 'center', gap: 12, textDecoration: 'none', color: 'white', flex: 1 }}>
+          <div className="user-avatar">{getIniciais(perfil?.nome)}</div>
+          <div className="user-details">
+            <div className="user-name">{perfil?.nome || 'Usuario'}</div>
+            <div className="user-role">{perfil?.tipo === 'admin' ? 'Administrador' : 'Gerente'}</div>
+          </div>
+        </NavLink>
+        <button onClick={logout} style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '8px'
+        }}>
+          <svg viewBox="0 0 24 24" style={{ width: 20, height: 20, stroke: 'rgba(255,255,255,0.7)', strokeWidth: 2, fill: 'none' }}>
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+        </button>
       </div>
     </aside>
   )
