@@ -4,9 +4,16 @@ import { supabase } from '../supabaseClient'
 function Motoristas() {
   const [motoristas, setMotoristas] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
+  const [showModal, setShowModal] = useState(false)
   const [editando, setEditando] = useState(null)
-  const [form, setForm] = useState({ nome: '', telefone: '', email: '' })
+  const [form, setForm] = useState({
+    nome: '',
+    telefone: '',
+    email: '',
+    marca_modelo: '',
+    cor: '',
+    placa: ''
+  })
 
   useEffect(() => {
     fetchMotoristas()
@@ -19,57 +26,86 @@ function Motoristas() {
       .select('*')
       .order('nome')
 
-    if (error) {
-      console.error('Erro ao buscar motoristas:', error)
-    } else {
+    if (!error) {
       setMotoristas(data || [])
     }
     setLoading(false)
   }
 
-  async function handleSubmit(e) {
+  function handleChange(e) {
+    const { name, value } = e.target
+    setForm({ ...form, [name]: value })
+  }
+
+  function abrirModal(motorista = null) {
+    if (motorista) {
+      setEditando(motorista.id)
+      setForm({
+        nome: motorista.nome || '',
+        telefone: motorista.telefone || '',
+        email: motorista.email || '',
+        marca_modelo: motorista.marca_modelo || '',
+        cor: motorista.cor || '',
+        placa: motorista.placa || ''
+      })
+    } else {
+      setEditando(null)
+      setForm({
+        nome: '',
+        telefone: '',
+        email: '',
+        marca_modelo: '',
+        cor: '',
+        placa: ''
+      })
+    }
+    setShowModal(true)
+  }
+
+  async function salvarMotorista(e) {
     e.preventDefault()
+
+    const dados = {
+      nome: form.nome,
+      telefone: form.telefone,
+      email: form.email || null,
+      marca_modelo: form.marca_modelo || null,
+      cor: form.cor || null,
+      placa: form.placa ? form.placa.toUpperCase() : null
+    }
 
     if (editando) {
       const { error } = await supabase
         .from('motoristas')
-        .update(form)
+        .update(dados)
         .eq('id', editando)
 
       if (error) {
         alert('Erro ao atualizar motorista')
+        return
       }
     } else {
       const { error } = await supabase
         .from('motoristas')
-        .insert([form])
+        .insert([{ ...dados, ativo: true }])
 
       if (error) {
-        alert('Erro ao criar motorista: ' + error.message)
+        alert('Erro ao criar motorista')
+        return
       }
     }
 
-    setForm({ nome: '', telefone: '', email: '' })
-    setShowForm(false)
-    setEditando(null)
+    setShowModal(false)
     fetchMotoristas()
   }
 
-  function handleEditar(motorista) {
-    setForm({ nome: motorista.nome, telefone: motorista.telefone, email: motorista.email || '' })
-    setEditando(motorista.id)
-    setShowForm(true)
-  }
-
-  async function handleToggleAtivo(motorista) {
+  async function toggleAtivo(motorista) {
     const { error } = await supabase
       .from('motoristas')
       .update({ ativo: !motorista.ativo })
       .eq('id', motorista.id)
 
-    if (error) {
-      alert('Erro ao atualizar motorista')
-    } else {
+    if (!error) {
       fetchMotoristas()
     }
   }
@@ -78,17 +114,14 @@ function Motoristas() {
     return nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
   }
 
-  function cancelarForm() {
-    setForm({ nome: '', telefone: '', email: '' })
-    setShowForm(false)
-    setEditando(null)
-  }
-
   return (
     <>
       <header className="header">
-        <h1 className="page-title">Motoristas</h1>
-        <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+        <div className="header-left">
+          <h1 className="page-title">Motoristas</h1>
+          <span className="page-subtitle">{motoristas.length} cadastrados</span>
+        </div>
+        <button className="btn btn-primary" onClick={() => abrirModal()}>
           <svg viewBox="0 0 24 24" style={{ width: 18, height: 18, stroke: 'currentColor', strokeWidth: 2, fill: 'none' }}>
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/>
@@ -97,150 +130,166 @@ function Motoristas() {
         </button>
       </header>
 
-      {/* Form Modal */}
-      {showForm && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: 12,
-            padding: 24,
-            width: '100%',
-            maxWidth: 480
-          }}>
-            <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20, color: 'var(--verde-escuro)' }}>
-              {editando ? 'Editar Motorista' : 'Novo Motorista'}
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group" style={{ marginBottom: 16 }}>
-                <label className="form-label">Nome *</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={form.nome}
-                  onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                  placeholder="Nome completo"
-                  required
-                />
+      {loading ? (
+        <div className="loading">Carregando...</div>
+      ) : (
+        <div className="motoristas-grid">
+          {motoristas.map(motorista => (
+            <div key={motorista.id} className={`motorista-card ${!motorista.ativo ? 'inativo' : ''}`}>
+              <div className="motorista-header">
+                <div className="driver-avatar">{getIniciais(motorista.nome)}</div>
+                <div className="motorista-info">
+                  <h3>{motorista.nome}</h3>
+                  <span className={`status-badge ${motorista.ativo ? 'status-ativo' : 'status-inativo'}`}>
+                    {motorista.ativo ? 'Ativo' : 'Inativo'}
+                  </span>
+                </div>
               </div>
-              <div className="form-group" style={{ marginBottom: 16 }}>
-                <label className="form-label">Telefone *</label>
-                <input
-                  type="tel"
-                  className="form-input"
-                  value={form.telefone}
-                  onChange={(e) => setForm({ ...form, telefone: e.target.value })}
-                  placeholder="(00) 00000-0000"
-                  required
-                />
+              
+              <div className="motorista-details">
+                <div className="detail-item">
+                  <svg viewBox="0 0 24 24" style={{ width: 16, height: 16, stroke: 'currentColor', strokeWidth: 2, fill: 'none' }}>
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                  <span>{motorista.telefone}</span>
+                </div>
+                {motorista.email && (
+                  <div className="detail-item">
+                    <svg viewBox="0 0 24 24" style={{ width: 16, height: 16, stroke: 'currentColor', strokeWidth: 2, fill: 'none' }}>
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                      <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    <span>{motorista.email}</span>
+                  </div>
+                )}
+                {motorista.marca_modelo && (
+                  <div className="detail-item">
+                    <svg viewBox="0 0 24 24" style={{ width: 16, height: 16, stroke: 'currentColor', strokeWidth: 2, fill: 'none' }}>
+                      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10l-2-4H8L6 10l-2.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2"/>
+                      <circle cx="7" cy="17" r="2"/>
+                      <circle cx="17" cy="17" r="2"/>
+                    </svg>
+                    <span>{motorista.marca_modelo} {motorista.cor && `- ${motorista.cor}`}</span>
+                  </div>
+                )}
+                {motorista.placa && (
+                  <div className="detail-item">
+                    <svg viewBox="0 0 24 24" style={{ width: 16, height: 16, stroke: 'currentColor', strokeWidth: 2, fill: 'none' }}>
+                      <rect x="3" y="6" width="18" height="12" rx="2"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    <span>{motorista.placa}</span>
+                  </div>
+                )}
               </div>
-              <div className="form-group" style={{ marginBottom: 24 }}>
-                <label className="form-label">Email <span className="optional">(opcional)</span></label>
-                <input
-                  type="email"
-                  className="form-input"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="email@exemplo.com"
-                />
+
+              <div className="motorista-actions">
+                <button className="btn btn-secondary btn-sm" onClick={() => abrirModal(motorista)}>
+                  Editar
+                </button>
+                <button 
+                  className={`btn btn-sm ${motorista.ativo ? 'btn-danger' : 'btn-primary'}`}
+                  onClick={() => toggleAtivo(motorista)}
+                >
+                  {motorista.ativo ? 'Desativar' : 'Ativar'}
+                </button>
               </div>
-              <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-                <button type="button" className="btn btn-secondary" onClick={cancelarForm}>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal */}
+      {showModal && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{editando ? 'Editar Motorista' : 'Novo Motorista'}</h2>
+              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+            </div>
+            <form onSubmit={salvarMotorista}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label className="form-label">Nome *</label>
+                  <input
+                    type="text"
+                    name="nome"
+                    className="form-input"
+                    value={form.nome}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Telefone *</label>
+                  <input
+                    type="tel"
+                    name="telefone"
+                    className="form-input"
+                    value={form.telefone}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    className="form-input"
+                    value={form.email}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Marca/Modelo do Veiculo</label>
+                  <input
+                    type="text"
+                    name="marca_modelo"
+                    className="form-input"
+                    placeholder="Ex: Fiat Toro"
+                    value={form.marca_modelo}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Cor</label>
+                    <input
+                      type="text"
+                      name="cor"
+                      className="form-input"
+                      placeholder="Ex: Preta"
+                      value={form.cor}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Placa</label>
+                    <input
+                      type="text"
+                      name="placa"
+                      className="form-input"
+                      placeholder="Ex: ABC1D23"
+                      value={form.placa}
+                      onChange={handleChange}
+                      style={{ textTransform: 'uppercase' }}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  {editando ? 'Salvar' : 'Criar Motorista'}
+                  {editando ? 'Salvar' : 'Criar'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-
-      {/* Stats */}
-      <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        <div className="stat-card">
-          <div className="stat-label">Total</div>
-          <div className="stat-value">{motoristas.length}</div>
-        </div>
-        <div className="stat-card success">
-          <div className="stat-label">Ativos</div>
-          <div className="stat-value">{motoristas.filter(m => m.ativo).length}</div>
-        </div>
-        <div className="stat-card alert">
-          <div className="stat-label">Inativos</div>
-          <div className="stat-value">{motoristas.filter(m => !m.ativo).length}</div>
-        </div>
-      </div>
-
-      {/* List */}
-      <div className="card">
-        {loading ? (
-          <div className="loading">Carregando...</div>
-        ) : motoristas.length === 0 ? (
-          <div className="card-body" style={{ textAlign: 'center', padding: 40, color: 'var(--cinza-texto)' }}>
-            Nenhum motorista cadastrado
-          </div>
-        ) : (
-          <table className="trips-table">
-            <thead>
-              <tr>
-                <th>Motorista</th>
-                <th>Telefone</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {motoristas.map((motorista) => (
-                <tr key={motorista.id} style={{ cursor: 'default' }}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div className="driver-avatar" style={{ width: 40, height: 40, fontSize: 14 }}>
-                        {getIniciais(motorista.nome)}
-                      </div>
-                      <span style={{ fontWeight: 600 }}>{motorista.nome}</span>
-                    </div>
-                  </td>
-                  <td>{motorista.telefone}</td>
-                  <td>{motorista.email || '—'}</td>
-                  <td>
-                    <span className={`status-badge ${motorista.ativo ? 'status-concluida' : 'status-cancelada'}`}>
-                      {motorista.ativo ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button 
-                        className="btn btn-secondary" 
-                        style={{ padding: '8px 16px' }}
-                        onClick={() => handleEditar(motorista)}
-                      >
-                        Editar
-                      </button>
-                      <button 
-                        className={`btn ${motorista.ativo ? 'btn-danger' : 'btn-primary'}`}
-                        style={{ padding: '8px 16px' }}
-                        onClick={() => handleToggleAtivo(motorista)}
-                      >
-                        {motorista.ativo ? 'Desativar' : 'Ativar'}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
     </>
   )
 }
