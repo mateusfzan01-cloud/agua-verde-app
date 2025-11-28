@@ -168,20 +168,60 @@ function MotoristaApp() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' }}>
-      {/* Header */}
-      <div style={{
-        background: 'white',
-        padding: '12px 20px',
+  {/* Header */}
+<div style={{
+  background: 'white',
+  padding: '12px 20px',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+}}>
+  <img src="/logo-agua-verde.jpg" alt="Agua Verde" style={{ height: '40px' }} />
+  
+  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    {/* Sino de notificacao */}
+    <button
+      onClick={() => setVisualizacao('dia')}
+      style={{
+        position: 'relative',
+        background: '#f0f0f0',
+        border: 'none',
+        borderRadius: '50%',
+        width: '42px',
+        height: '42px',
         display: 'flex',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-      }}>
-        <img src="/logo-agua-verde.jpg" alt="Agua Verde" style={{ height: '40px' }} />
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button 
-            onClick={() => setMostrarPerfil(true)}
+        justifyContent: 'center',
+        cursor: 'pointer'
+      }}
+    >
+      <svg viewBox="0 0 24 24" style={{ width: '24px', height: '24px', fill: '#333' }}>
+        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+      </svg>
+      {proximasViagens.length > 0 && (
+        <span style={{
+          position: 'absolute',
+          top: '-4px',
+          right: '-4px',
+          background: '#e74c3c',
+          color: 'white',
+          fontSize: '11px',
+          fontWeight: 700,
+          borderRadius: '50%',
+          width: '20px',
+          height: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          {proximasViagens.length}
+        </span>
+      )}
+    </button>
+
+    <button 
+      onClick={() => setMostrarPerfil(true)}
             style={{
               width: '42px',
               height: '42px',
@@ -514,6 +554,60 @@ function PerfilMotorista({ perfil, user, logout, voltar, getIniciais }) {
   const [novaSenha, setNovaSenha] = useState('')
   const [mensagem, setMensagem] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const [fotoUrl, setFotoUrl] = useState(perfil?.foto_url || '')
+  const [uploadando, setUploadando] = useState(false)
+
+  async function handleFotoUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setMensagem('Selecione uma imagem')
+      return
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setMensagem('Imagem deve ter no maximo 2MB')
+      return
+    }
+
+    setUploadando(true)
+    setMensagem('')
+
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${user.id}-${Date.now()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, file, { upsert: true })
+
+    if (uploadError) {
+      setMensagem('Erro ao enviar foto')
+      setUploadando(false)
+      return
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(fileName)
+
+    const novaUrl = urlData.publicUrl
+
+    const { error: updateError } = await supabase
+      .from('perfis')
+      .update({ foto_url: novaUrl })
+      .eq('id', user.id)
+
+    if (updateError) {
+      setMensagem('Erro ao salvar foto')
+    } else {
+      setFotoUrl(novaUrl)
+      setMensagem('Foto atualizada!')
+    }
+
+    setUploadando(false)
+    setTimeout(() => setMensagem(''), 3000)
+  }
 
   async function salvarNome() {
     setSalvando(true)
@@ -574,23 +668,65 @@ function PerfilMotorista({ perfil, user, logout, voltar, getIniciais }) {
       </div>
 
       <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
+        {/* Avatar com upload */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div style={{
-            width: '100px',
-            height: '100px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)',
-            color: 'white',
-            fontSize: '36px',
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 12px'
-          }}>
-            {getIniciais(perfil?.nome)}
+          <label style={{ cursor: 'pointer', display: 'inline-block', position: 'relative' }}>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleFotoUpload}
+              style={{ display: 'none' }}
+            />
+            {fotoUrl ? (
+              <img
+                src={fotoUrl}
+                alt="Avatar"
+                style={{
+                  width: '100px',
+                  height: '100px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '3px solid #27ae60'
+                }}
+              />
+            ) : (
+              <div style={{
+                width: '100px',
+                height: '100px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)',
+                color: 'white',
+                fontSize: '36px',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {getIniciais(perfil?.nome)}
+              </div>
+            )}
+            <div style={{
+              position: 'absolute',
+              bottom: '0',
+              right: '0',
+              background: '#27ae60',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '2px solid white'
+            }}>
+              <svg viewBox="0 0 24 24" style={{ width: '16px', height: '16px', fill: 'white' }}>
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </div>
+          </label>
+          {uploadando && <div style={{ marginTop: '8px', color: '#666' }}>Enviando...</div>}
+          <div style={{ fontSize: '12px', color: '#666', textTransform: 'uppercase', marginTop: '8px' }}>
+            Toque para alterar foto
           </div>
-          <div style={{ fontSize: '12px', color: '#666', textTransform: 'uppercase' }}>Motorista</div>
         </div>
 
         {mensagem && (

@@ -313,7 +313,7 @@ function DetalheViagem() {
     </div>
     <button
       onClick={() => {
-       const mensagem = `🚗 *Nova viagem atribuida!*%0A%0A📅 *Data:* ${data} as ${hora}%0A📍 *Origem:* ${viagem.origem}%0A📍 *Destino:* ${viagem.destino}%0A👤 *Passageiro:* ${viagem.passageiro_nome}%0A👥 *Quantidade:* ${viagem.quantidade_passageiros} pessoa(s)%0A🧳 *Bagagens:* ${viagem.quantidade_bagagens || 0}%0A%0A🔗 Acesse o app: https://agua-verde-app.vercel.app/`
+       const mensagem = `🚗 *Nova viagem atribuída!*%0A%0A📅 *Data:* ${data} as ${hora}%0A📍 *Origem:* ${viagem.origem}%0A📍 *Destino:* ${viagem.destino}%0A👤 *Passageiro:* ${viagem.passageiro_nome}%0A👥 *Quantidade:* ${viagem.quantidade_passageiros} pessoa(s)%0A🧳 *Bagagens:* ${viagem.quantidade_bagagens || 0}%0A%0A🔗 Acesse o app: https://agua-verde-app.vercel.app/`
         const telefone = viagem.motoristas.telefone.replace(/\D/g, '')
         window.open(`https://wa.me/55${telefone}?text=${mensagem}`, '_blank')
       }}
