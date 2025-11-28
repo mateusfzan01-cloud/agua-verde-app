@@ -24,43 +24,46 @@ function MotoristaApp() {
   }, [perfil, dataAtual, visualizacao])
 
   async function carregarViagensDia() {
-    setCarregando(true)
-    const dataStr = dataAtual.toISOString().split('T')[0]
-    
-    const { data, error } = await supabase
-      .from('viagens')
-      .select('*')
-      .eq('motorista_id', perfil.motorista_id)
-      .gte('data_hora', dataStr + 'T00:00:00')
-      .lte('data_hora', dataStr + 'T23:59:59')
-      .order('data_hora', { ascending: true })
+  setCarregando(true)
+  
+  const inicioLocal = new Date(dataAtual.getFullYear(), dataAtual.getMonth(), dataAtual.getDate(), 0, 0, 0)
+  const fimLocal = new Date(dataAtual.getFullYear(), dataAtual.getMonth(), dataAtual.getDate(), 23, 59, 59)
+  
+  const { data, error } = await supabase
+    .from('viagens')
+    .select('*')
+    .eq('motorista_id', perfil.motorista_id)
+    .gte('data_hora', inicioLocal.toISOString())
+    .lte('data_hora', fimLocal.toISOString())
+    .order('data_hora', { ascending: true })
 
-    if (!error) {
-      setViagens(data || [])
-    }
-    setCarregando(false)
+  if (!error) {
+    setViagens(data || [])
   }
+  setCarregando(false)
+}
 
   async function carregarViagensMes() {
-    setCarregando(true)
-    const ano = dataAtual.getFullYear()
-    const mes = dataAtual.getMonth()
-    const primeiroDia = new Date(ano, mes, 1).toISOString().split('T')[0]
-    const ultimoDia = new Date(ano, mes + 1, 0).toISOString().split('T')[0]
-    
-    const { data, error } = await supabase
-      .from('viagens')
-      .select('*')
-      .eq('motorista_id', perfil.motorista_id)
-      .gte('data_hora', primeiroDia + 'T00:00:00')
-      .lte('data_hora', ultimoDia + 'T23:59:59')
-      .order('data_hora', { ascending: true })
+  setCarregando(true)
+  const ano = dataAtual.getFullYear()
+  const mes = dataAtual.getMonth()
+  
+  const inicioMes = new Date(ano, mes, 1, 0, 0, 0)
+  const fimMes = new Date(ano, mes + 1, 0, 23, 59, 59)
+  
+  const { data, error } = await supabase
+    .from('viagens')
+    .select('*')
+    .eq('motorista_id', perfil.motorista_id)
+    .gte('data_hora', inicioMes.toISOString())
+    .lte('data_hora', fimMes.toISOString())
+    .order('data_hora', { ascending: true })
 
-    if (!error) {
-      setViagensMes(data || [])
-    }
-    setCarregando(false)
+  if (!error) {
+    setViagensMes(data || [])
   }
+  setCarregando(false)
+}
 
   async function atualizarStatus(viagemId, novoStatus) {
     const { error } = await supabase
@@ -894,7 +897,7 @@ function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atuali
         <button onClick={() => setModalOcorrencia(viagem.id)} style={{
           padding: '12px 16px', background: '#fee', color: '#c00', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 500
         }}>
-          !!!
+          Ocorrência
         </button>
       </div>
     </div>
