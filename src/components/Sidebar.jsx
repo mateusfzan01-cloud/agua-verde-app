@@ -11,16 +11,7 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="logo-container">
-        <svg viewBox="0 0 180 60" className="logo-img">
-          <polygon points="30,10 50,50 30,40" fill="#4cb963"/>
-          <polygon points="30,10 10,50 30,40" fill="#1a5c38"/>
-          <text x="60" y="32" fill="white" fontSize="18" fontWeight="bold" fontFamily="Inter, sans-serif">
-            AGUA <tspan fill="#4cb963">VERDE</tspan>
-          </text>
-          <text x="60" y="46" fill="rgba(255,255,255,0.7)" fontSize="8" fontFamily="Inter, sans-serif" letterSpacing="1">
-            VIAGENS E RECEPTIVOS
-          </text>
-        </svg>
+        <img src="/logo-agua-verde.jpg" alt="Agua Verde" style={{ maxWidth: '180px', height: 'auto' }} />
       </div>
 
       <ul className="nav-menu">
