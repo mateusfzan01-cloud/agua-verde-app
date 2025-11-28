@@ -559,7 +559,7 @@ function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atuali
           </div>
         </div>
         <div style={{ textAlign: 'right', fontSize: '14px', color: '#666' }}>
-          {viagem.num_passageiros} passageiro{viagem.num_passageiros > 1 ? 's' : ''}
+          {viagem.quantidade_passageiros} passageiro{viagem.quantidade_passageiros > 1 ? 's' : ''}
         </div>
       </div>
 
