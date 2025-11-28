@@ -87,7 +87,7 @@ function MotoristaApp() {
       case 'aguardando_passageiro':
         return { texto: 'Iniciar Viagem', proximo: 'em_andamento', cor: '#f39c12' }
       case 'em_andamento':
-        return { texto: 'Concluir Viagem', proximo: 'concluida', cor: '#2ecc71' }
+        return { texto: 'Concluir Viagem', proximo: 'concluida', cor: '#27ae60' }
       default:
         return null
     }
@@ -110,23 +110,25 @@ function MotoristaApp() {
   const viagensConcluidas = viagens.filter(v => v.status === 'concluida')
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f5' }}>
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' }}>
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+        background: 'white',
         padding: '16px 20px',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}>
         <img src="/logo-agua-verde.jpg" alt="Agua Verde" style={{ height: '40px' }} />
         <button onClick={logout} style={{
-          background: 'rgba(255,255,255,0.1)',
+          background: '#f0f0f0',
           border: 'none',
-          color: 'white',
+          color: '#333',
           padding: '8px 16px',
           borderRadius: '8px',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          fontWeight: 500
         }}>
           Sair
         </button>
@@ -142,27 +144,27 @@ function MotoristaApp() {
         borderBottom: '1px solid #eee'
       }}>
         <button onClick={() => navegarData(-1)} style={{
-          background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', padding: '8px'
+          background: '#f0f0f0', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '8px 12px', borderRadius: '8px'
         }}>{'<'}</button>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontWeight: 600, textTransform: 'capitalize' }}>{formatarData(dataAtual)}</div>
         </div>
         <button onClick={() => navegarData(1)} style={{
-          background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', padding: '8px'
+          background: '#f0f0f0', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '8px 12px', borderRadius: '8px'
         }}>{'>'}</button>
       </div>
 
       {/* Resumo */}
       <div style={{ display: 'flex', gap: '12px', padding: '16px 20px' }}>
-        <div style={{ flex: 1, background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-          <div style={{ fontSize: '28px', fontWeight: 700, color: '#2ecc71' }}>{viagens.length}</div>
+        <div style={{ flex: 1, background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+          <div style={{ fontSize: '28px', fontWeight: 700, color: '#27ae60' }}>{viagens.length}</div>
           <div style={{ fontSize: '12px', color: '#666' }}>Total</div>
         </div>
-        <div style={{ flex: 1, background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+        <div style={{ flex: 1, background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
           <div style={{ fontSize: '28px', fontWeight: 700, color: '#3498db' }}>{viagensConcluidas.length}</div>
           <div style={{ fontSize: '12px', color: '#666' }}>Concluidas</div>
         </div>
-        <div style={{ flex: 1, background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+        <div style={{ flex: 1, background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
           <div style={{ fontSize: '28px', fontWeight: 700, color: '#f39c12' }}>{proximasViagens.length}</div>
           <div style={{ fontSize: '12px', color: '#666' }}>Pendentes</div>
         </div>
@@ -177,7 +179,7 @@ function MotoristaApp() {
             {/* Viagem Atual */}
             {viagemAtual && (
               <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#666', textTransform: 'uppercase' }}>
+                <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#555', textTransform: 'uppercase', fontWeight: 600 }}>
                   Viagem Atual
                 </h3>
                 <ViagemCard 
@@ -195,7 +197,7 @@ function MotoristaApp() {
             {/* Proximas Viagens */}
             {proximasViagens.length > 0 && (
               <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#666', textTransform: 'uppercase' }}>
+                <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#555', textTransform: 'uppercase', fontWeight: 600 }}>
                   Proximas Viagens
                 </h3>
                 {proximasViagens.map(viagem => (
@@ -215,7 +217,7 @@ function MotoristaApp() {
             {/* Concluidas */}
             {viagensConcluidas.length > 0 && (
               <div>
-                <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#666', textTransform: 'uppercase' }}>
+                <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#555', textTransform: 'uppercase', fontWeight: 600 }}>
                   Concluidas
                 </h3>
                 {viagensConcluidas.map(viagem => (
@@ -233,8 +235,8 @@ function MotoristaApp() {
             )}
 
             {viagens.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666' }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>-</div>
+              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666', background: 'white', borderRadius: '12px', marginTop: '20px' }}>
+                <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
                 <div>Nenhuma viagem para este dia</div>
               </div>
             )}
@@ -263,13 +265,13 @@ function MotoristaApp() {
             <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
               <button onClick={() => setModalOcorrencia(null)} style={{
                 flex: 1, padding: '12px', background: '#f0f0f0', border: 'none',
-                borderRadius: '8px', cursor: 'pointer'
+                borderRadius: '8px', cursor: 'pointer', fontWeight: 500
               }}>
                 Cancelar
               </button>
               <button onClick={registrarOcorrencia} style={{
                 flex: 1, padding: '12px', background: '#e74c3c', color: 'white',
-                border: 'none', borderRadius: '8px', cursor: 'pointer'
+                border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 500
               }}>
                 Registrar
               </button>
@@ -290,13 +292,14 @@ function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atuali
       borderRadius: '12px',
       padding: '16px',
       marginBottom: '12px',
-      border: destaque ? '2px solid #2ecc71' : '1px solid #eee'
+      border: destaque ? '2px solid #27ae60' : 'none',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
         <div>
           <div style={{ fontWeight: 600, fontSize: '18px' }}>{formatarHora(viagem.data_hora)}</div>
           <div style={{
-            display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: '12px',
+            display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 500,
             background: viagem.status === 'concluida' ? '#d4edda' : '#fff3cd',
             color: viagem.status === 'concluida' ? '#155724' : '#856404'
           }}>
@@ -310,11 +313,11 @@ function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atuali
 
       <div style={{ fontSize: '14px', marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '8px' }}>
-          <span style={{ color: '#2ecc71', marginRight: '8px' }}>●</span>
+          <span style={{ color: '#27ae60', marginRight: '8px', fontWeight: 'bold' }}>●</span>
           <span>{viagem.origem}</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-          <span style={{ color: '#e74c3c', marginRight: '8px' }}>●</span>
+          <span style={{ color: '#e74c3c', marginRight: '8px', fontWeight: 'bold' }}>●</span>
           <span>{viagem.destino}</span>
         </div>
       </div>
@@ -345,12 +348,12 @@ function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atuali
         {viagem.passageiro_telefone && (
           <>
             <a href={`tel:${viagem.passageiro_telefone}`} style={{
-              padding: '12px', background: '#f0f0f0', borderRadius: '8px', textDecoration: 'none'
+              padding: '12px 16px', background: '#f0f0f0', borderRadius: '8px', textDecoration: 'none', color: '#333', fontWeight: 500
             }}>
               Tel
             </a>
             <a href={`https://wa.me/55${viagem.passageiro_telefone.replace(/\D/g, '')}`} style={{
-              padding: '12px', background: '#25d366', color: 'white', borderRadius: '8px', textDecoration: 'none'
+              padding: '12px 16px', background: '#25d366', color: 'white', borderRadius: '8px', textDecoration: 'none', fontWeight: 500
             }}>
               Zap
             </a>
@@ -358,7 +361,7 @@ function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atuali
         )}
 
         <button onClick={() => setModalOcorrencia(viagem.id)} style={{
-          padding: '12px', background: '#fee', color: '#c00', border: 'none', borderRadius: '8px', cursor: 'pointer'
+          padding: '12px 16px', background: '#fee', color: '#c00', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 500
         }}>
           !!!
         </button>

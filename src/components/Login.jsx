@@ -28,7 +28,7 @@ function Login() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
+      background: 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)'
     }}>
       <div style={{
         background: 'white',
@@ -37,7 +37,7 @@ function Login() {
         width: '100%',
         maxWidth: '400px',
         margin: '20px',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
       }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <img 
