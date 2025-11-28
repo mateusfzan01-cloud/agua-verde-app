@@ -265,11 +265,11 @@ function DetalheViagem() {
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Voo</div>
                   <div style={{ fontSize: 15 }}>{viagem.voo_numero} ({viagem.voo_companhia})</div>
                 </div>
+)}
 <div>
   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Bagagens</div>
   <div style={{ fontSize: 15 }}>{viagem.quantidade_bagagens || 0} volume(s)</div>
-</div>
-              )}
+</div>	
               <div>
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Passageiros</div>
                 <div style={{ fontSize: 15 }}>{viagem.quantidade_passageiros} pessoa(s)</div>
