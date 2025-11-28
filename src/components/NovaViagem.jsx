@@ -11,6 +11,7 @@ function NovaViagem() {
     passageiro_telefone: '',
     passageiro_email: '',
     quantidade_passageiros: 1,
+    quantidade_bagagens: 0,
     origem: '',
     destino: '',
     data: '',
@@ -43,15 +44,14 @@ function NovaViagem() {
     e.preventDefault()
     setSalvando(true)
 
-    // Montar data_hora
     const data_hora = `${form.data}T${form.hora}:00`
 
-    // Preparar dados
     const dados = {
       passageiro_nome: form.passageiro_nome,
       passageiro_telefone: form.passageiro_telefone,
       passageiro_email: form.passageiro_email || null,
       quantidade_passageiros: parseInt(form.quantidade_passageiros) || 1,
+      quantidade_bagagens: parseInt(form.quantidade_bagagens) || 0,
       origem: form.origem,
       destino: form.destino,
       data_hora: data_hora,
@@ -136,6 +136,20 @@ function NovaViagem() {
                 />
               </div>
               <div className="form-group">
+                <label className="form-label">Quantidade de bagagens</label>
+                <input
+                  type="number"
+                  name="quantidade_bagagens"
+                  className="form-input"
+                  placeholder="0"
+                  min="0"
+                  value={form.quantidade_bagagens}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+            <div className="form-row">
+              <div className="form-group">
                 <label className="form-label">Email <span className="optional">(opcional)</span></label>
                 <input
                   type="email"
@@ -191,7 +205,7 @@ function NovaViagem() {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Horário previsto *</label>
+                <label className="form-label">Horario previsto *</label>
                 <input
                   type="time"
                   name="hora"
@@ -206,10 +220,10 @@ function NovaViagem() {
 
           {/* Voo */}
           <div className="form-section">
-            <h2 className="section-title">Informações do Voo <span className="optional" style={{ textTransform: 'none', fontWeight: 400 }}>(opcional)</span></h2>
+            <h2 className="section-title">Informacoes do Voo <span className="optional" style={{ textTransform: 'none', fontWeight: 400 }}>(opcional)</span></h2>
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Número do voo</label>
+                <label className="form-label">Numero do voo</label>
                 <input
                   type="text"
                   name="voo_numero"
@@ -220,7 +234,7 @@ function NovaViagem() {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Companhia aérea</label>
+                <label className="form-label">Companhia aerea</label>
                 <select
                   name="voo_companhia"
                   className="form-select"
@@ -238,9 +252,9 @@ function NovaViagem() {
             <p className="form-hint">Preencha se a viagem envolver embarque ou desembarque no aeroporto.</p>
           </div>
 
-          {/* Atribuição */}
+          {/* Atribuicao */}
           <div className="form-section">
-            <h2 className="section-title">Atribuição</h2>
+            <h2 className="section-title">Atribuicao</h2>
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Motorista <span className="optional">(opcional)</span></label>
@@ -255,7 +269,7 @@ function NovaViagem() {
                     <option key={m.id} value={m.id}>{m.nome}</option>
                   ))}
                 </select>
-                <p className="form-hint">Você pode vincular um motorista agora ou depois.</p>
+                <p className="form-hint">Voce pode vincular um motorista agora ou depois.</p>
               </div>
               <div className="form-group">
                 <label className="form-label">Valor <span className="optional">(opcional)</span></label>
@@ -273,16 +287,16 @@ function NovaViagem() {
             </div>
           </div>
 
-          {/* Observações */}
+          {/* Observacoes */}
           <div className="form-section">
-            <h2 className="section-title">Observações</h2>
+            <h2 className="section-title">Observacoes</h2>
             <div className="form-row single">
               <div className="form-group">
-                <label className="form-label">Observações <span className="optional">(opcional)</span></label>
+                <label className="form-label">Observacoes <span className="optional">(opcional)</span></label>
                 <textarea
                   name="observacoes"
                   className="form-textarea"
-                  placeholder="Informações adicionais sobre a viagem, como necessidades especiais, bagagem extra, etc."
+                  placeholder="Informacoes adicionais sobre a viagem, como necessidades especiais, bagagem extra, etc."
                   value={form.observacoes}
                   onChange={handleChange}
                 />

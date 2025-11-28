@@ -3,21 +3,27 @@ import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../supabaseClient'
 
 function MotoristaApp() {
-  const { perfil, logout } = useAuth()
+  const { perfil, logout, user } = useAuth()
   const [viagens, setViagens] = useState([])
+  const [viagensMes, setViagensMes] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [dataAtual, setDataAtual] = useState(new Date())
   const [modalOcorrencia, setModalOcorrencia] = useState(null)
   const [textoOcorrencia, setTextoOcorrencia] = useState('')
   const [mostrarPerfil, setMostrarPerfil] = useState(false)
+  const [visualizacao, setVisualizacao] = useState('dia')
 
   useEffect(() => {
     if (perfil?.motorista_id) {
-      carregarViagens()
+      if (visualizacao === 'dia') {
+        carregarViagensDia()
+      } else {
+        carregarViagensMes()
+      }
     }
-  }, [perfil, dataAtual])
+  }, [perfil, dataAtual, visualizacao])
 
-  async function carregarViagens() {
+  async function carregarViagensDia() {
     setCarregando(true)
     const dataStr = dataAtual.toISOString().split('T')[0]
     
@@ -35,6 +41,27 @@ function MotoristaApp() {
     setCarregando(false)
   }
 
+  async function carregarViagensMes() {
+    setCarregando(true)
+    const ano = dataAtual.getFullYear()
+    const mes = dataAtual.getMonth()
+    const primeiroDia = new Date(ano, mes, 1).toISOString().split('T')[0]
+    const ultimoDia = new Date(ano, mes + 1, 0).toISOString().split('T')[0]
+    
+    const { data, error } = await supabase
+      .from('viagens')
+      .select('*')
+      .eq('motorista_id', perfil.motorista_id)
+      .gte('data_hora', primeiroDia + 'T00:00:00')
+      .lte('data_hora', ultimoDia + 'T23:59:59')
+      .order('data_hora', { ascending: true })
+
+    if (!error) {
+      setViagensMes(data || [])
+    }
+    setCarregando(false)
+  }
+
   async function atualizarStatus(viagemId, novoStatus) {
     const { error } = await supabase
       .from('viagens')
@@ -42,7 +69,7 @@ function MotoristaApp() {
       .eq('id', viagemId)
 
     if (!error) {
-      carregarViagens()
+      carregarViagensDia()
     }
   }
 
@@ -71,8 +98,24 @@ function MotoristaApp() {
     setDataAtual(novaData)
   }
 
+  function navegarMes(meses) {
+    const novaData = new Date(dataAtual)
+    novaData.setMonth(novaData.getMonth() + meses)
+    setDataAtual(novaData)
+  }
+
+  function selecionarDia(dia) {
+    const novaData = new Date(dataAtual.getFullYear(), dataAtual.getMonth(), dia)
+    setDataAtual(novaData)
+    setVisualizacao('dia')
+  }
+
   function formatarData(data) {
     return data.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+  }
+
+  function formatarMes(data) {
+    return data.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
   }
 
   function formatarHora(dataHora) {
@@ -110,13 +153,17 @@ function MotoristaApp() {
     return nome?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??'
   }
 
+  function contarViagensDia(dia) {
+    const dataStr = `${dataAtual.getFullYear()}-${String(dataAtual.getMonth() + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+    return viagensMes.filter(v => v.data_hora.startsWith(dataStr)).length
+  }
+
   const viagemAtual = viagens.find(v => ['a_caminho', 'aguardando_passageiro', 'em_andamento'].includes(v.status))
   const proximasViagens = viagens.filter(v => v.status === 'vinculada')
   const viagensConcluidas = viagens.filter(v => v.status === 'concluida')
 
-  // Tela de Perfil
   if (mostrarPerfil) {
-    return <PerfilMotorista perfil={perfil} logout={logout} voltar={() => setMostrarPerfil(false)} getIniciais={getIniciais} />
+    return <PerfilMotorista perfil={perfil} user={user} logout={logout} voltar={() => setMostrarPerfil(false)} getIniciais={getIniciais} />
   }
 
   return (
@@ -155,112 +202,164 @@ function MotoristaApp() {
         </div>
       </div>
 
-      {/* Navegacao de Data */}
+      {/* Toggle Dia/Mes */}
       <div style={{
         background: 'white',
         padding: '12px 20px',
         display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '8px',
         borderBottom: '1px solid #eee'
       }}>
-        <button onClick={() => navegarData(-1)} style={{
-          background: '#f0f0f0', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '8px 12px', borderRadius: '8px'
-        }}>{'<'}</button>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontWeight: 600, textTransform: 'capitalize' }}>{formatarData(dataAtual)}</div>
-        </div>
-        <button onClick={() => navegarData(1)} style={{
-          background: '#f0f0f0', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '8px 12px', borderRadius: '8px'
-        }}>{'>'}</button>
+        <button
+          onClick={() => setVisualizacao('dia')}
+          style={{
+            padding: '8px 20px',
+            borderRadius: '20px',
+            border: 'none',
+            background: visualizacao === 'dia' ? '#27ae60' : '#f0f0f0',
+            color: visualizacao === 'dia' ? 'white' : '#333',
+            fontWeight: 500,
+            cursor: 'pointer'
+          }}
+        >
+          Dia
+        </button>
+        <button
+          onClick={() => setVisualizacao('mes')}
+          style={{
+            padding: '8px 20px',
+            borderRadius: '20px',
+            border: 'none',
+            background: visualizacao === 'mes' ? '#27ae60' : '#f0f0f0',
+            color: visualizacao === 'mes' ? 'white' : '#333',
+            fontWeight: 500,
+            cursor: 'pointer'
+          }}
+        >
+          Mes
+        </button>
       </div>
 
-      {/* Resumo */}
-      <div style={{ display: 'flex', gap: '12px', padding: '16px 20px' }}>
-        <div style={{ flex: 1, background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <div style={{ fontSize: '28px', fontWeight: 700, color: '#27ae60' }}>{viagens.length}</div>
-          <div style={{ fontSize: '12px', color: '#666' }}>Total</div>
-        </div>
-        <div style={{ flex: 1, background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <div style={{ fontSize: '28px', fontWeight: 700, color: '#3498db' }}>{viagensConcluidas.length}</div>
-          <div style={{ fontSize: '12px', color: '#666' }}>Concluidas</div>
-        </div>
-        <div style={{ flex: 1, background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-          <div style={{ fontSize: '28px', fontWeight: 700, color: '#f39c12' }}>{proximasViagens.length}</div>
-          <div style={{ fontSize: '12px', color: '#666' }}>Pendentes</div>
-        </div>
-      </div>
+      {visualizacao === 'mes' ? (
+        <CalendarioMensal 
+          dataAtual={dataAtual}
+          navegarMes={navegarMes}
+          formatarMes={formatarMes}
+          contarViagensDia={contarViagensDia}
+          selecionarDia={selecionarDia}
+          carregando={carregando}
+        />
+      ) : (
+        <>
+          {/* Navegacao de Data */}
+          <div style={{
+            background: 'white',
+            padding: '12px 20px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid #eee'
+          }}>
+            <button onClick={() => navegarData(-1)} style={{
+              background: '#f0f0f0', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '8px 12px', borderRadius: '8px'
+            }}>{'<'}</button>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontWeight: 600, textTransform: 'capitalize' }}>{formatarData(dataAtual)}</div>
+            </div>
+            <button onClick={() => navegarData(1)} style={{
+              background: '#f0f0f0', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '8px 12px', borderRadius: '8px'
+            }}>{'>'}</button>
+          </div>
 
-      {/* Conteudo */}
-      <div style={{ padding: '0 20px 20px' }}>
-        {carregando ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Carregando...</div>
-        ) : (
-          <>
-            {viagemAtual && (
-              <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#555', textTransform: 'uppercase', fontWeight: 600 }}>
-                  Viagem Atual
-                </h3>
-                <ViagemCard 
-                  viagem={viagemAtual} 
-                  formatarHora={formatarHora}
-                  getStatusLabel={getStatusLabel}
-                  getBotaoAcao={getBotaoAcao}
-                  atualizarStatus={atualizarStatus}
-                  setModalOcorrencia={setModalOcorrencia}
-                  destaque
-                />
-              </div>
-            )}
+          {/* Resumo */}
+          <div style={{ display: 'flex', gap: '12px', padding: '16px 20px' }}>
+            <div style={{ flex: 1, background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#27ae60' }}>{viagens.length}</div>
+              <div style={{ fontSize: '12px', color: '#666' }}>Total</div>
+            </div>
+            <div style={{ flex: 1, background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#3498db' }}>{viagensConcluidas.length}</div>
+              <div style={{ fontSize: '12px', color: '#666' }}>Concluidas</div>
+            </div>
+            <div style={{ flex: 1, background: 'white', borderRadius: '12px', padding: '16px', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#f39c12' }}>{proximasViagens.length}</div>
+              <div style={{ fontSize: '12px', color: '#666' }}>Pendentes</div>
+            </div>
+          </div>
 
-            {proximasViagens.length > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#555', textTransform: 'uppercase', fontWeight: 600 }}>
-                  Proximas Viagens
-                </h3>
-                {proximasViagens.map(viagem => (
-                  <ViagemCard 
-                    key={viagem.id}
-                    viagem={viagem}
-                    formatarHora={formatarHora}
-                    getStatusLabel={getStatusLabel}
-                    getBotaoAcao={getBotaoAcao}
-                    atualizarStatus={atualizarStatus}
-                    setModalOcorrencia={setModalOcorrencia}
-                  />
-                ))}
-              </div>
-            )}
+          {/* Conteudo */}
+          <div style={{ padding: '0 20px 20px' }}>
+            {carregando ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Carregando...</div>
+            ) : (
+              <>
+                {viagemAtual && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#555', textTransform: 'uppercase', fontWeight: 600 }}>
+                      Viagem Atual
+                    </h3>
+                    <ViagemCard 
+                      viagem={viagemAtual} 
+                      formatarHora={formatarHora}
+                      getStatusLabel={getStatusLabel}
+                      getBotaoAcao={getBotaoAcao}
+                      atualizarStatus={atualizarStatus}
+                      setModalOcorrencia={setModalOcorrencia}
+                      destaque
+                    />
+                  </div>
+                )}
 
-            {viagensConcluidas.length > 0 && (
-              <div>
-                <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#555', textTransform: 'uppercase', fontWeight: 600 }}>
-                  Concluidas
-                </h3>
-                {viagensConcluidas.map(viagem => (
-                  <ViagemCard 
-                    key={viagem.id}
-                    viagem={viagem}
-                    formatarHora={formatarHora}
-                    getStatusLabel={getStatusLabel}
-                    getBotaoAcao={getBotaoAcao}
-                    atualizarStatus={atualizarStatus}
-                    setModalOcorrencia={setModalOcorrencia}
-                  />
-                ))}
-              </div>
-            )}
+                {proximasViagens.length > 0 && (
+                  <div style={{ marginBottom: '20px' }}>
+                    <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#555', textTransform: 'uppercase', fontWeight: 600 }}>
+                      Proximas Viagens
+                    </h3>
+                    {proximasViagens.map(viagem => (
+                      <ViagemCard 
+                        key={viagem.id}
+                        viagem={viagem}
+                        formatarHora={formatarHora}
+                        getStatusLabel={getStatusLabel}
+                        getBotaoAcao={getBotaoAcao}
+                        atualizarStatus={atualizarStatus}
+                        setModalOcorrencia={setModalOcorrencia}
+                      />
+                    ))}
+                  </div>
+                )}
 
-            {viagens.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666', background: 'white', borderRadius: '12px', marginTop: '20px' }}>
-                <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
-                <div>Nenhuma viagem para este dia</div>
-              </div>
+                {viagensConcluidas.length > 0 && (
+                  <div>
+                    <h3 style={{ margin: '0 0 12px', fontSize: '14px', color: '#555', textTransform: 'uppercase', fontWeight: 600 }}>
+                      Concluidas
+                    </h3>
+                    {viagensConcluidas.map(viagem => (
+                      <ViagemCard 
+                        key={viagem.id}
+                        viagem={viagem}
+                        formatarHora={formatarHora}
+                        getStatusLabel={getStatusLabel}
+                        getBotaoAcao={getBotaoAcao}
+                        atualizarStatus={atualizarStatus}
+                        setModalOcorrencia={setModalOcorrencia}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {viagens.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '60px 20px', color: '#666', background: 'white', borderRadius: '12px', marginTop: '20px' }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>📅</div>
+                    <div>Nenhuma viagem para este dia</div>
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </>
+      )}
 
       {/* Modal Ocorrencia */}
       {modalOcorrencia && (
@@ -301,14 +400,120 @@ function MotoristaApp() {
   )
 }
 
-// Componente de Perfil do Motorista
-function PerfilMotorista({ perfil, logout, voltar, getIniciais }) {
+function CalendarioMensal({ dataAtual, navegarMes, formatarMes, contarViagensDia, selecionarDia, carregando }) {
+  const ano = dataAtual.getFullYear()
+  const mes = dataAtual.getMonth()
+  const primeiroDia = new Date(ano, mes, 1).getDay()
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate()
+  const hoje = new Date()
+
+  const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']
+
+  const dias = []
+  for (let i = 0; i < primeiroDia; i++) {
+    dias.push(null)
+  }
+  for (let i = 1; i <= diasNoMes; i++) {
+    dias.push(i)
+  }
+
+  return (
+    <div style={{ padding: '16px 20px' }}>
+      <div style={{
+        background: 'white',
+        padding: '16px',
+        borderRadius: '12px',
+        marginBottom: '16px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <button onClick={() => navegarMes(-1)} style={{
+            background: '#f0f0f0', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '8px 12px', borderRadius: '8px'
+          }}>{'<'}</button>
+          <div style={{ fontWeight: 600, fontSize: '18px', textTransform: 'capitalize' }}>{formatarMes(dataAtual)}</div>
+          <button onClick={() => navegarMes(1)} style={{
+            background: '#f0f0f0', border: 'none', fontSize: '20px', cursor: 'pointer', padding: '8px 12px', borderRadius: '8px'
+          }}>{'>'}</button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '8px' }}>
+          {diasSemana.map(dia => (
+            <div key={dia} style={{ textAlign: 'center', fontSize: '12px', color: '#666', fontWeight: 600, padding: '8px 0' }}>
+              {dia}
+            </div>
+          ))}
+        </div>
+
+        {carregando ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>Carregando...</div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+            {dias.map((dia, index) => {
+              if (!dia) {
+                return <div key={index} />
+              }
+
+              const qtdViagens = contarViagensDia(dia)
+              const ehHoje = hoje.getDate() === dia && hoje.getMonth() === mes && hoje.getFullYear() === ano
+
+              return (
+                <button
+                  key={index}
+                  onClick={() => selecionarDia(dia)}
+                  style={{
+                    aspectRatio: '1',
+                    border: ehHoje ? '2px solid #27ae60' : 'none',
+                    borderRadius: '8px',
+                    background: qtdViagens > 0 ? '#e8f5e9' : '#f8f8f8',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '2px'
+                  }}
+                >
+                  <span style={{ fontSize: '16px', fontWeight: ehHoje ? 700 : 400, color: ehHoje ? '#27ae60' : '#333' }}>
+                    {dia}
+                  </span>
+                  {qtdViagens > 0 && (
+                    <span style={{
+                      fontSize: '10px',
+                      background: '#27ae60',
+                      color: 'white',
+                      borderRadius: '10px',
+                      padding: '1px 6px',
+                      fontWeight: 600
+                    }}>
+                      {qtdViagens}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', fontSize: '12px', color: '#666' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ width: '12px', height: '12px', background: '#e8f5e9', borderRadius: '4px' }} />
+          <span>Com viagens</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ width: '12px', height: '12px', border: '2px solid #27ae60', borderRadius: '4px' }} />
+          <span>Hoje</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PerfilMotorista({ perfil, user, logout, voltar, getIniciais }) {
   const [nome, setNome] = useState(perfil?.nome || '')
-  const [senhaAtual, setSenhaAtual] = useState('')
   const [novaSenha, setNovaSenha] = useState('')
   const [mensagem, setMensagem] = useState('')
   const [salvando, setSalvando] = useState(false)
-  const { user } = useAuth()
 
   async function salvarNome() {
     setSalvando(true)
@@ -338,7 +543,6 @@ function PerfilMotorista({ perfil, logout, voltar, getIniciais }) {
       setMensagem('Erro ao alterar senha')
     } else {
       setMensagem('Senha alterada com sucesso!')
-      setSenhaAtual('')
       setNovaSenha('')
     }
     setSalvando(false)
@@ -347,7 +551,6 @@ function PerfilMotorista({ perfil, logout, voltar, getIniciais }) {
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' }}>
-      {/* Header */}
       <div style={{
         background: 'white',
         padding: '12px 20px',
@@ -362,10 +565,7 @@ function PerfilMotorista({ perfil, logout, voltar, getIniciais }) {
           padding: '8px 16px',
           borderRadius: '8px',
           cursor: 'pointer',
-          fontWeight: 500,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px'
+          fontWeight: 500
         }}>
           ← Voltar
         </button>
@@ -374,7 +574,6 @@ function PerfilMotorista({ perfil, logout, voltar, getIniciais }) {
       </div>
 
       <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
-        {/* Avatar grande */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <div style={{
             width: '100px',
@@ -407,127 +606,60 @@ function PerfilMotorista({ perfil, logout, voltar, getIniciais }) {
           </div>
         )}
 
-        {/* Card Dados */}
         <div style={{ background: 'white', borderRadius: '12px', padding: '20px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
           <h3 style={{ margin: '0 0 16px', fontSize: '16px' }}>Dados Pessoais</h3>
           
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500, color: '#333', fontSize: '14px' }}>
-              Nome
-            </label>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500, color: '#333', fontSize: '14px' }}>Nome</label>
             <input
               type="text"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #e0e0e0',
-                borderRadius: '8px',
-                fontSize: '16px',
-                boxSizing: 'border-box'
-              }}
+              style={{ width: '100%', padding: '12px', border: '2px solid #e0e0e0', borderRadius: '8px', fontSize: '16px', boxSizing: 'border-box' }}
             />
           </div>
 
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500, color: '#333', fontSize: '14px' }}>
-              Email
-            </label>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500, color: '#333', fontSize: '14px' }}>Email</label>
             <input
               type="email"
               value={user?.email || ''}
               disabled
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #e0e0e0',
-                borderRadius: '8px',
-                fontSize: '16px',
-                boxSizing: 'border-box',
-                background: '#f5f5f5',
-                color: '#666'
-              }}
+              style={{ width: '100%', padding: '12px', border: '2px solid #e0e0e0', borderRadius: '8px', fontSize: '16px', boxSizing: 'border-box', background: '#f5f5f5', color: '#666' }}
             />
           </div>
 
-          <button
-            onClick={salvarNome}
-            disabled={salvando}
-            style={{
-              width: '100%',
-              padding: '12px',
-              background: '#27ae60',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
+          <button onClick={salvarNome} disabled={salvando} style={{
+            width: '100%', padding: '12px', background: '#27ae60', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 600, cursor: 'pointer'
+          }}>
             {salvando ? 'Salvando...' : 'Salvar Nome'}
           </button>
         </div>
 
-        {/* Card Senha */}
         <div style={{ background: 'white', borderRadius: '12px', padding: '20px', marginBottom: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
           <h3 style={{ margin: '0 0 16px', fontSize: '16px' }}>Alterar Senha</h3>
           
           <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500, color: '#333', fontSize: '14px' }}>
-              Nova Senha
-            </label>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500, color: '#333', fontSize: '14px' }}>Nova Senha</label>
             <input
               type="password"
               value={novaSenha}
               onChange={(e) => setNovaSenha(e.target.value)}
               placeholder="Minimo 6 caracteres"
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '2px solid #e0e0e0',
-                borderRadius: '8px',
-                fontSize: '16px',
-                boxSizing: 'border-box'
-              }}
+              style={{ width: '100%', padding: '12px', border: '2px solid #e0e0e0', borderRadius: '8px', fontSize: '16px', boxSizing: 'border-box' }}
             />
           </div>
 
-          <button
-            onClick={alterarSenha}
-            disabled={salvando || !novaSenha}
-            style={{
-              width: '100%',
-              padding: '12px',
-              background: novaSenha ? '#3498db' : '#ccc',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '16px',
-              fontWeight: 600,
-              cursor: novaSenha ? 'pointer' : 'not-allowed'
-            }}
-          >
+          <button onClick={alterarSenha} disabled={salvando || !novaSenha} style={{
+            width: '100%', padding: '12px', background: novaSenha ? '#3498db' : '#ccc', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 600, cursor: novaSenha ? 'pointer' : 'not-allowed'
+          }}>
             {salvando ? 'Alterando...' : 'Alterar Senha'}
           </button>
         </div>
 
-        {/* Botao Logout */}
-        <button
-          onClick={logout}
-          style={{
-            width: '100%',
-            padding: '14px',
-            background: '#e74c3c',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}
-        >
+        <button onClick={logout} style={{
+          width: '100%', padding: '14px', background: '#e74c3c', color: 'white', border: 'none', borderRadius: '8px', fontSize: '16px', fontWeight: 600, cursor: 'pointer'
+        }}>
           Sair da Conta
         </button>
       </div>
@@ -558,8 +690,9 @@ function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atuali
             {getStatusLabel(viagem.status)}
           </div>
         </div>
-        <div style={{ textAlign: 'right', fontSize: '14px', color: '#666' }}>
-          {viagem.quantidade_passageiros} passageiro{viagem.quantidade_passageiros > 1 ? 's' : ''}
+        <div style={{ textAlign: 'right', fontSize: '13px', color: '#666' }}>
+          <div>{viagem.quantidade_passageiros} passageiro{viagem.quantidade_passageiros > 1 ? 's' : ''}</div>
+          <div>{viagem.quantidade_bagagens || 0} bagagem{(viagem.quantidade_bagagens || 0) !== 1 ? 'ns' : ''}</div>
         </div>
       </div>
 
@@ -580,7 +713,13 @@ function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atuali
 
       {viagem.voo_numero && (
         <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px', padding: '8px', background: '#f8f9fa', borderRadius: '6px' }}>
-          Voo: {viagem.voo_numero} - {viagem.voo_horario}
+          Voo: {viagem.voo_numero} {viagem.voo_companhia && `(${viagem.voo_companhia})`}
+        </div>
+      )}
+
+      {viagem.observacoes && (
+        <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px', padding: '8px', background: '#fff8e6', borderRadius: '6px' }}>
+          <strong>Obs:</strong> {viagem.observacoes}
         </div>
       )}
 
