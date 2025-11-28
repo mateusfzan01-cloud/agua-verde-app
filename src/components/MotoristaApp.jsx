@@ -692,7 +692,7 @@ function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atuali
         </div>
         <div style={{ textAlign: 'right', fontSize: '13px', color: '#666' }}>
           <div>{viagem.quantidade_passageiros} passageiro{viagem.quantidade_passageiros > 1 ? 's' : ''}</div>
-          <div>{viagem.quantidade_bagagens || 0} bagagem{(viagem.quantidade_bagagens || 0) !== 1 ? 'ns' : ''}</div>
+         <div>{viagem.quantidade_bagagens || 0} {(viagem.quantidade_bagagens || 0) === 1 ? 'bagagem' : 'bagagens'}</div>
         </div>
       </div>
 

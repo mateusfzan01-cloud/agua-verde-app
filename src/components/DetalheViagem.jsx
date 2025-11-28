@@ -186,13 +186,16 @@ function DetalheViagem() {
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          {viagem.status !== 'cancelada' && viagem.status !== 'concluida' && (
-            <button className="btn btn-danger" onClick={() => atualizarStatus('cancelada')}>
-              Cancelar
-            </button>
-          )}
-        </div>
+       <div style={{ display: 'flex', gap: 12 }}>
+  <button className="btn btn-secondary" onClick={() => navigate(`/viagens/${id}/editar`)}>
+    Editar
+  </button>
+  {viagem.status !== 'cancelada' && viagem.status !== 'concluida' && (
+    <button className="btn btn-danger" onClick={() => atualizarStatus('cancelada')}>
+      Cancelar
+    </button>
+  )}
+</div>
       </header>
 
       <div className="content-grid">
@@ -262,6 +265,10 @@ function DetalheViagem() {
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Voo</div>
                   <div style={{ fontSize: 15 }}>{viagem.voo_numero} ({viagem.voo_companhia})</div>
                 </div>
+<div>
+  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Bagagens</div>
+  <div style={{ fontSize: 15 }}>{viagem.quantidade_bagagens || 0} volume(s)</div>
+</div>
               )}
               <div>
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Passageiros</div>
