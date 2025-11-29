@@ -32,9 +32,16 @@ function MotoristaApp() {
   const [obtendoLocalizacao, setObtendoLocalizacao] = useState(false)
   const [enviandoNoShow, setEnviandoNoShow] = useState(false)
   const fileInputRef = useRef(null)
+  
+  // Dropdown de notificações
+  const [dropdownAberto, setDropdownAberto] = useState(false)
+  const [viagensNaoLidas, setViagensNaoLidas] = useState([])
 
   useEffect(() => {
     if (perfil?.motorista_id) {
+      carregarViagensNaoLidas()
+    }
+  }, [perfil])
       if (visualizacao === 'dia') {
         carregarViagensDia()
       } else {
@@ -42,6 +49,53 @@ function MotoristaApp() {
       }
     }
   }, [perfil, dataAtual, visualizacao])
+
+  async function carregarViagensNaoLidas() {
+    // Buscar viagens pendentes/vinculadas que ainda não foram "lidas" pelo motorista
+    // Considera viagens futuras ou do dia atual
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+    
+    const { data, error } = await supabase
+      .from('viagens')
+      .select('*')
+      .eq('motorista_id', perfil.motorista_id)
+      .in('status', ['vinculada', 'pendente'])
+      .gte('data_hora', hoje.toISOString())
+      .is('notificacao_lida', null)
+      .order('data_hora', { ascending: true })
+      .limit(10)
+
+    if (!error) {
+      setViagensNaoLidas(data || [])
+    }
+  }
+
+  async function marcarComoLida(viagemId) {
+    const { error } = await supabase
+      .from('viagens')
+      .update({ notificacao_lida: true })
+      .eq('id', viagemId)
+
+    if (!error) {
+      setViagensNaoLidas(prev => prev.filter(v => v.id !== viagemId))
+    }
+  }
+
+  async function marcarTodasComoLidas() {
+    const ids = viagensNaoLidas.map(v => v.id)
+    if (ids.length === 0) return
+
+    const { error } = await supabase
+      .from('viagens')
+      .update({ notificacao_lida: true })
+      .in('id', ids)
+
+    if (!error) {
+      setViagensNaoLidas([])
+      setDropdownAberto(false)
+    }
+  }
 
   async function carregarViagensDia() {
     setCarregando(true)
@@ -250,7 +304,7 @@ function MotoristaApp() {
 
       if (uploadError) {
         console.error('Erro upload:', uploadError)
-        alert('Erro ao enviar foto. Tente novamente.')
+        alert('Erro ao enviar foto: ' + uploadError.message)
         setEnviandoNoShow(false)
         return
       }
@@ -275,7 +329,8 @@ function MotoristaApp() {
         .eq('id', modalNoShow.id)
 
       if (updateError) {
-        alert('Erro ao registrar no-show')
+        console.error('Erro update:', updateError)
+        alert('Erro ao atualizar viagem: ' + updateError.message)
         setEnviandoNoShow(false)
         return
       }
@@ -412,45 +467,156 @@ function MotoristaApp() {
         <img src="/logo-agua-verde.jpg" alt="Agua Verde" style={{ height: '40px' }} />
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Sino de notificacao */}
-          <button
-            onClick={() => setVisualizacao('dia')}
-            style={{
-              position: 'relative',
-              background: '#f0f0f0',
-              border: 'none',
-              borderRadius: '50%',
-              width: '42px',
-              height: '42px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer'
-            }}
-          >
-            <svg viewBox="0 0 24 24" style={{ width: '24px', height: '24px', fill: '#333' }}>
-              <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
-            </svg>
-            {proximasViagens.length > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '-4px',
-                right: '-4px',
-                background: '#e74c3c',
-                color: 'white',
-                fontSize: '11px',
-                fontWeight: 700,
+          {/* Sino de notificacao com dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setDropdownAberto(!dropdownAberto)}
+              style={{
+                position: 'relative',
+                background: dropdownAberto ? '#e8f5e9' : '#f0f0f0',
+                border: 'none',
                 borderRadius: '50%',
-                width: '20px',
-                height: '20px',
+                width: '42px',
+                height: '42px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                cursor: 'pointer'
+              }}
+            >
+              <svg viewBox="0 0 24 24" style={{ width: '24px', height: '24px', fill: '#333' }}>
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+              </svg>
+              {viagensNaoLidas.length > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-4px',
+                  right: '-4px',
+                  background: '#e74c3c',
+                  color: 'white',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  {viagensNaoLidas.length}
+                </span>
+              )}
+            </button>
+
+            {/* Dropdown */}
+            {dropdownAberto && (
+              <div style={{
+                position: 'absolute',
+                top: '50px',
+                right: '0',
+                width: '320px',
+                maxHeight: '400px',
+                overflowY: 'auto',
+                background: 'white',
+                borderRadius: '12px',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+                zIndex: 1000
               }}>
-                {proximasViagens.length}
-              </span>
+                <div style={{
+                  padding: '14px 16px',
+                  borderBottom: '1px solid #eee',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ fontWeight: 600, fontSize: '15px' }}>Notificações</span>
+                  {viagensNaoLidas.length > 0 && (
+                    <button
+                      onClick={marcarTodasComoLidas}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#27ae60',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        fontWeight: 500
+                      }}
+                    >
+                      Marcar todas como lidas
+                    </button>
+                  )}
+                </div>
+
+                {viagensNaoLidas.length === 0 ? (
+                  <div style={{
+                    padding: '30px 20px',
+                    textAlign: 'center',
+                    color: '#999'
+                  }}>
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>✓</div>
+                    <div>Nenhuma notificação pendente</div>
+                  </div>
+                ) : (
+                  viagensNaoLidas.map(viagem => (
+                    <div
+                      key={viagem.id}
+                      style={{
+                        padding: '14px 16px',
+                        borderBottom: '1px solid #f5f5f5',
+                        background: '#fffef5'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <span style={{ 
+                          fontWeight: 600, 
+                          fontSize: '14px',
+                          color: '#27ae60'
+                        }}>
+                          Nova viagem
+                        </span>
+                        <span style={{ fontSize: '12px', color: '#999' }}>
+                          {new Date(viagem.data_hora).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
+                      
+                      <div style={{ fontSize: '13px', marginBottom: '4px' }}>
+                        <strong>{new Date(viagem.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</strong>
+                        {' - '}{viagem.passageiro_nome}
+                      </div>
+                      
+                      <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px' }}>
+                        {viagem.origem} → {viagem.destino}
+                      </div>
+
+                      <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
+                        {viagem.quantidade_passageiros} passageiro{viagem.quantidade_passageiros > 1 ? 's' : ''}
+                        {(viagem.bagagens_grandes > 0 || viagem.bagagens_pequenas > 0) && (
+                          <span> • {viagem.bagagens_grandes || 0}G + {viagem.bagagens_pequenas || 0}P bagagens</span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => marcarComoLida(viagem.id)}
+                        style={{
+                          width: '100%',
+                          padding: '8px',
+                          background: '#f0f0f0',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: 500,
+                          cursor: 'pointer',
+                          color: '#555'
+                        }}
+                      >
+                        ✓ Marcar como lida
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
             )}
-          </button>
+          </div>
 
           <button 
             onClick={() => setMostrarPerfil(true)}

@@ -4,8 +4,8 @@ import { supabase } from '../supabaseClient'
 function Motoristas() {
   const [motoristas, setMotoristas] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showModal, setShowModal] = useState(false)
-  const [editando, setEditando] = useState(null)
+  const [modalAberto, setModalAberto] = useState(false)
+  const [motoristaSelecionado, setMotoristaSelecionado] = useState(null)
   const [form, setForm] = useState({
     nome: '',
     telefone: '',
@@ -25,21 +25,16 @@ function Motoristas() {
       .from('motoristas')
       .select('*')
       .order('nome')
-
+    
     if (!error) {
       setMotoristas(data || [])
     }
     setLoading(false)
   }
 
-  function handleChange(e) {
-    const { name, value } = e.target
-    setForm({ ...form, [name]: value })
-  }
-
   function abrirModal(motorista = null) {
     if (motorista) {
-      setEditando(motorista.id)
+      setMotoristaSelecionado(motorista)
       setForm({
         nome: motorista.nome || '',
         telefone: motorista.telefone || '',
@@ -49,7 +44,7 @@ function Motoristas() {
         placa: motorista.placa || ''
       })
     } else {
-      setEditando(null)
+      setMotoristaSelecionado(null)
       setForm({
         nome: '',
         telefone: '',
@@ -59,27 +54,27 @@ function Motoristas() {
         placa: ''
       })
     }
-    setShowModal(true)
+    setModalAberto(true)
+  }
+
+  function fecharModal() {
+    setModalAberto(false)
+    setMotoristaSelecionado(null)
+  }
+
+  function handleChange(e) {
+    setForm({ ...form, [e.target.name]: e.target.value })
   }
 
   async function salvarMotorista(e) {
     e.preventDefault()
-
-    const dados = {
-      nome: form.nome,
-      telefone: form.telefone,
-      email: form.email || null,
-      marca_modelo: form.marca_modelo || null,
-      cor: form.cor || null,
-      placa: form.placa ? form.placa.toUpperCase() : null
-    }
-
-    if (editando) {
+    
+    if (motoristaSelecionado) {
       const { error } = await supabase
         .from('motoristas')
-        .update(dados)
-        .eq('id', editando)
-
+        .update(form)
+        .eq('id', motoristaSelecionado.id)
+      
       if (error) {
         alert('Erro ao atualizar motorista')
         return
@@ -87,15 +82,15 @@ function Motoristas() {
     } else {
       const { error } = await supabase
         .from('motoristas')
-        .insert([{ ...dados, ativo: true }])
-
+        .insert([{ ...form, ativo: true }])
+      
       if (error) {
         alert('Erro ao criar motorista')
         return
       }
     }
-
-    setShowModal(false)
+    
+    fecharModal()
     fetchMotoristas()
   }
 
@@ -104,14 +99,18 @@ function Motoristas() {
       .from('motoristas')
       .update({ ativo: !motorista.ativo })
       .eq('id', motorista.id)
-
+    
     if (!error) {
       fetchMotoristas()
     }
   }
 
   function getIniciais(nome) {
-    return nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+    return nome?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??'
+  }
+
+  if (loading) {
+    return <div className="loading">Carregando...</div>
   }
 
   return (
@@ -119,171 +118,406 @@ function Motoristas() {
       <header className="header">
         <div className="header-left">
           <h1 className="page-title">Motoristas</h1>
-          <span className="page-subtitle">{motoristas.length} cadastrados</span>
+          <span style={{ color: 'var(--cinza-texto)', fontSize: 14 }}>
+            {motoristas.length} cadastrado{motoristas.length !== 1 ? 's' : ''}
+          </span>
         </div>
         <button className="btn btn-primary" onClick={() => abrirModal()}>
-          <svg viewBox="0 0 24 24" style={{ width: 18, height: 18, stroke: 'currentColor', strokeWidth: 2, fill: 'none' }}>
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Novo Motorista
+          + Novo Motorista
         </button>
       </header>
 
-      {loading ? (
-        <div className="loading">Carregando...</div>
-      ) : (
-        <div className="motoristas-grid">
-          {motoristas.map(motorista => (
-            <div key={motorista.id} className={`motorista-card ${!motorista.ativo ? 'inativo' : ''}`}>
-              <div className="motorista-header">
-                <div className="driver-avatar">{getIniciais(motorista.nome)}</div>
-                <div className="motorista-info">
-                  <h3>{motorista.nome}</h3>
-                  <span className={`status-badge ${motorista.ativo ? 'status-ativo' : 'status-inativo'}`}>
-                    {motorista.ativo ? 'Ativo' : 'Inativo'}
-                  </span>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+        gap: 16 
+      }}>
+        {motoristas.map(motorista => (
+          <div 
+            key={motorista.id} 
+            style={{
+              background: 'white',
+              borderRadius: 12,
+              overflow: 'hidden',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+              opacity: motorista.ativo ? 1 : 0.6
+            }}
+          >
+            {/* Header do Card */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: 16,
+              background: motorista.ativo ? 'var(--verde-escuro)' : '#666',
+              color: 'white'
+            }}>
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18,
+                fontWeight: 600
+              }}>
+                {getIniciais(motorista.nome)}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 16 }}>{motorista.nome}</div>
+                <div style={{ 
+                  fontSize: 11, 
+                  opacity: 0.9,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5
+                }}>
+                  {motorista.ativo ? 'Ativo' : 'Inativo'}
                 </div>
               </div>
-              
-              <div className="motorista-details">
-                <div className="detail-item">
-                  <svg viewBox="0 0 24 24" style={{ width: 16, height: 16, stroke: 'currentColor', strokeWidth: 2, fill: 'none' }}>
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                  </svg>
-                  <span>{motorista.telefone}</span>
-                </div>
-                {motorista.email && (
-                  <div className="detail-item">
-                    <svg viewBox="0 0 24 24" style={{ width: 16, height: 16, stroke: 'currentColor', strokeWidth: 2, fill: 'none' }}>
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                      <polyline points="22,6 12,13 2,6"/>
-                    </svg>
-                    <span>{motorista.email}</span>
-                  </div>
-                )}
-                {motorista.marca_modelo && (
-                  <div className="detail-item">
-                    <svg viewBox="0 0 24 24" style={{ width: 16, height: 16, stroke: 'currentColor', strokeWidth: 2, fill: 'none' }}>
-                      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9L18 10l-2-4H8L6 10l-2.5 1.1C2.7 11.3 2 12.1 2 13v3c0 .6.4 1 1 1h2"/>
-                      <circle cx="7" cy="17" r="2"/>
-                      <circle cx="17" cy="17" r="2"/>
-                    </svg>
-                    <span>{motorista.marca_modelo} {motorista.cor && `- ${motorista.cor}`}</span>
-                  </div>
-                )}
-                {motorista.placa && (
-                  <div className="detail-item">
-                    <svg viewBox="0 0 24 24" style={{ width: 16, height: 16, stroke: 'currentColor', strokeWidth: 2, fill: 'none' }}>
-                      <rect x="3" y="6" width="18" height="12" rx="2"/>
-                      <line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                    <span>{motorista.placa}</span>
-                  </div>
-                )}
+            </div>
+
+            {/* Conteúdo do Card */}
+            <div style={{ padding: 16 }}>
+              {/* Telefone */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                <svg viewBox="0 0 24 24" style={{ width: 18, height: 18, stroke: 'var(--cinza-texto)', strokeWidth: 2, fill: 'none', flexShrink: 0 }}>
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+                <span style={{ fontSize: 14 }}>{motorista.telefone}</span>
               </div>
 
-              <div className="motorista-actions">
-                <button className="btn btn-secondary btn-sm" onClick={() => abrirModal(motorista)}>
+              {/* Email */}
+              {motorista.email && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <svg viewBox="0 0 24 24" style={{ width: 18, height: 18, stroke: 'var(--cinza-texto)', strokeWidth: 2, fill: 'none', flexShrink: 0 }}>
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                  <span style={{ fontSize: 14, color: 'var(--cinza-texto)' }}>{motorista.email}</span>
+                </div>
+              )}
+
+              {/* Veículo */}
+              {(motorista.marca_modelo || motorista.placa) && (
+                <div style={{ 
+                  marginTop: 12, 
+                  padding: 12, 
+                  background: '#f8f9fa', 
+                  borderRadius: 8 
+                }}>
+                  <div style={{ 
+                    fontSize: 11, 
+                    color: 'var(--cinza-texto)', 
+                    textTransform: 'uppercase', 
+                    marginBottom: 6,
+                    fontWeight: 600
+                  }}>
+                    Veículo
+                  </div>
+                  {motorista.marca_modelo && (
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>
+                      {motorista.marca_modelo}
+                      {motorista.cor && <span style={{ color: 'var(--cinza-texto)' }}> - {motorista.cor}</span>}
+                    </div>
+                  )}
+                  {motorista.placa && (
+                    <div style={{ 
+                      display: 'inline-block',
+                      marginTop: 6,
+                      padding: '4px 10px',
+                      background: 'white',
+                      border: '1px solid #ddd',
+                      borderRadius: 4,
+                      fontFamily: 'monospace',
+                      fontWeight: 600,
+                      fontSize: 13
+                    }}>
+                      {motorista.placa}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Ações */}
+              <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                <button 
+                  onClick={() => abrirModal(motorista)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    background: 'white',
+                    border: '1px solid #ddd',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 500
+                  }}
+                >
                   Editar
                 </button>
                 <button 
-                  className={`btn btn-sm ${motorista.ativo ? 'btn-danger' : 'btn-primary'}`}
                   onClick={() => toggleAtivo(motorista)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    background: motorista.ativo ? '#fff5f5' : '#f0fff4',
+                    border: `1px solid ${motorista.ativo ? '#ffcdd2' : '#c8e6c9'}`,
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: motorista.ativo ? '#c62828' : '#2e7d32'
+                  }}
                 >
                   {motorista.ativo ? 'Desativar' : 'Ativar'}
                 </button>
               </div>
             </div>
-          ))}
+          </div>
+        ))}
+      </div>
+
+      {motoristas.length === 0 && (
+        <div style={{ 
+          textAlign: 'center', 
+          padding: 60, 
+          color: 'var(--cinza-texto)',
+          background: 'white',
+          borderRadius: 12,
+          marginTop: 20
+        }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🚗</div>
+          <div style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Nenhum motorista cadastrado</div>
+          <div>Clique em "Novo Motorista" para começar</div>
         </div>
       )}
 
       {/* Modal */}
-      {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>{editando ? 'Editar Motorista' : 'Novo Motorista'}</h2>
-              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
+      {modalAberto && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20,
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 16,
+            width: '100%',
+            maxWidth: 500,
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}>
+            <div style={{ 
+              padding: '20px 24px', 
+              borderBottom: '1px solid #eee',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h2 style={{ margin: 0, fontSize: 20 }}>
+                {motoristaSelecionado ? 'Editar Motorista' : 'Novo Motorista'}
+              </h2>
+              <button 
+                onClick={fecharModal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: 24,
+                  cursor: 'pointer',
+                  color: '#999'
+                }}
+              >
+                ×
+              </button>
             </div>
-            <form onSubmit={salvarMotorista}>
-              <div className="modal-body">
-                <div className="form-group">
-                  <label className="form-label">Nome *</label>
-                  <input
-                    type="text"
-                    name="nome"
-                    className="form-input"
-                    value={form.nome}
-                    onChange={handleChange}
-                    required
-                  />
+
+            <form onSubmit={salvarMotorista} style={{ padding: 24 }}>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: 14 }}>
+                  Nome *
+                </label>
+                <input
+                  type="text"
+                  name="nome"
+                  value={form.nome}
+                  onChange={handleChange}
+                  required
+                  style={{
+                    width: '100%',
+                    padding: 12,
+                    border: '2px solid #e0e0e0',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: 14 }}>
+                  Telefone *
+                </label>
+                <input
+                  type="tel"
+                  name="telefone"
+                  value={form.telefone}
+                  onChange={handleChange}
+                  required
+                  placeholder="(81) 99999-9999"
+                  style={{
+                    width: '100%',
+                    padding: 12,
+                    border: '2px solid #e0e0e0',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: 14 }}>
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  style={{
+                    width: '100%',
+                    padding: 12,
+                    border: '2px solid #e0e0e0',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ 
+                padding: 16, 
+                background: '#f8f9fa', 
+                borderRadius: 8, 
+                marginBottom: 20 
+              }}>
+                <div style={{ 
+                  fontSize: 14, 
+                  fontWeight: 600, 
+                  marginBottom: 16,
+                  color: 'var(--verde-escuro)'
+                }}>
+                  🚗 Dados do Veículo
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Telefone *</label>
-                  <input
-                    type="tel"
-                    name="telefone"
-                    className="form-input"
-                    value={form.telefone}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    className="form-input"
-                    value={form.email}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Marca/Modelo do Veiculo</label>
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: 14 }}>
+                    Marca / Modelo
+                  </label>
                   <input
                     type="text"
                     name="marca_modelo"
-                    className="form-input"
-                    placeholder="Ex: Fiat Toro"
                     value={form.marca_modelo}
                     onChange={handleChange}
+                    placeholder="Ex: Toyota Corolla 2022"
+                    style={{
+                      width: '100%',
+                      padding: 12,
+                      border: '2px solid #e0e0e0',
+                      borderRadius: 8,
+                      fontSize: 16,
+                      boxSizing: 'border-box'
+                    }}
                   />
                 </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Cor</label>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: 14 }}>
+                      Cor
+                    </label>
                     <input
                       type="text"
                       name="cor"
-                      className="form-input"
-                      placeholder="Ex: Preta"
                       value={form.cor}
                       onChange={handleChange}
+                      placeholder="Ex: Prata"
+                      style={{
+                        width: '100%',
+                        padding: 12,
+                        border: '2px solid #e0e0e0',
+                        borderRadius: 8,
+                        fontSize: 16,
+                        boxSizing: 'border-box'
+                      }}
                     />
                   </div>
-                  <div className="form-group">
-                    <label className="form-label">Placa</label>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: 14 }}>
+                      Placa
+                    </label>
                     <input
                       type="text"
                       name="placa"
-                      className="form-input"
-                      placeholder="Ex: ABC1D23"
                       value={form.placa}
                       onChange={handleChange}
-                      style={{ textTransform: 'uppercase' }}
+                      placeholder="ABC1D23"
+                      style={{
+                        width: '100%',
+                        padding: 12,
+                        border: '2px solid #e0e0e0',
+                        borderRadius: 8,
+                        fontSize: 16,
+                        boxSizing: 'border-box',
+                        textTransform: 'uppercase'
+                      }}
                     />
                   </div>
                 </div>
               </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button 
+                  type="button" 
+                  onClick={fecharModal}
+                  style={{
+                    flex: 1,
+                    padding: 14,
+                    background: '#f0f0f0',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontSize: 15,
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  {editando ? 'Salvar' : 'Criar'}
+                <button 
+                  type="submit"
+                  style={{
+                    flex: 1,
+                    padding: 14,
+                    background: 'var(--verde-escuro)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontSize: 15,
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Salvar
                 </button>
               </div>
             </form>
