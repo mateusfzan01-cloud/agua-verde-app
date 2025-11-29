@@ -5,13 +5,12 @@ import Dashboard from './components/Dashboard'
 import Viagens from './components/Viagens'
 import NovaViagem from './components/NovaViagem'
 import DetalheViagem from './components/DetalheViagem'
+import EditarViagem from './components/EditarViagem'
 import Motoristas from './components/Motoristas'
 import Login from './components/Login'
 import MotoristaApp from './components/MotoristaApp'
 import Perfil from './components/Perfil'
-import EditarViagem from './components/EditarViagem'
 import AcompanharViagem from './components/AcompanharViagem'
-
 
 function AppContent() {
   const { user, perfil, loading } = useAuth()
@@ -54,11 +53,9 @@ function AppContent() {
           <Route path="/viagens" element={<Viagens />} />
           <Route path="/viagens/nova" element={<NovaViagem />} />
           <Route path="/viagens/:id" element={<DetalheViagem />} />
+          <Route path="/viagens/:id/editar" element={<EditarViagem />} />
           <Route path="/motoristas" element={<Motoristas />} />
           <Route path="/perfil" element={<Perfil />} />
-          <Route path="/viagens/:id/editar" element={<EditarViagem />} />
-          <Route path="/acompanhar/:token" element={<AcompanharViagem />} />
-
         </Routes>
       </main>
     </div>
@@ -68,7 +65,13 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <Routes>
+        {/* Rota pública - página de acompanhamento do cliente */}
+        <Route path="/acompanhar/:token" element={<AcompanharViagem />} />
+        
+        {/* Rotas protegidas */}
+        <Route path="/*" element={<AppContent />} />
+      </Routes>
     </AuthProvider>
   )
 }
