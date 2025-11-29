@@ -48,8 +48,9 @@ function EditarViagem() {
     }
 
     const dataHora = new Date(data.data_hora)
-    const dataStr = dataHora.toISOString().split('T')[0]
-    const horaStr = dataHora.toTimeString().substring(0, 5)
+    // Formatar para horário local do Brasil
+    const dataStr = dataHora.toLocaleDateString('en-CA') // formato YYYY-MM-DD
+    const horaStr = dataHora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false })
 
     setForm({
       passageiro_nome: data.passageiro_nome || '',
@@ -90,7 +91,8 @@ function EditarViagem() {
     e.preventDefault()
     setSalvando(true)
 
-    const data_hora = `${form.data}T${form.hora}:00`
+    // Adiciona timezone de Brasília (-03:00) para salvar corretamente
+    const data_hora = `${form.data}T${form.hora}:00-03:00`
 
     const dados = {
       passageiro_nome: form.passageiro_nome,

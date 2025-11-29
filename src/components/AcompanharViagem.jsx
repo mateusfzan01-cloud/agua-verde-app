@@ -17,27 +17,39 @@ function AcompanharViagem() {
   }, [token])
 
   async function carregarViagem() {
-    // Tentar buscar por token_cliente ou por id
-    let { data, error } = await supabase
-      .from('viagens')
-      .select('*, motoristas(id, nome, telefone, marca_modelo, cor, placa)')
-      .eq('token_cliente', token)
-      .single()
-
-    // Se não encontrou por token, tentar por ID
-    if (error || !data) {
+    let data = null
+    
+    // Primeiro tenta buscar por ID numérico
+    const idNumerico = parseInt(token)
+    if (!isNaN(idNumerico)) {
       const { data: dataById, error: errorById } = await supabase
         .from('viagens')
         .select('*, motoristas(id, nome, telefone, marca_modelo, cor, placa)')
-        .eq('id', token)
+        .eq('id', idNumerico)
         .single()
       
-      if (errorById || !dataById) {
-        setErro('Viagem não encontrada')
-        setLoading(false)
-        return
+      if (!errorById && dataById) {
+        data = dataById
       }
-      data = dataById
+    }
+    
+    // Se não encontrou por ID, tentar por token_cliente
+    if (!data) {
+      const { data: dataByToken, error: errorByToken } = await supabase
+        .from('viagens')
+        .select('*, motoristas(id, nome, telefone, marca_modelo, cor, placa)')
+        .eq('token_cliente', token)
+        .single()
+      
+      if (!errorByToken && dataByToken) {
+        data = dataByToken
+      }
+    }
+    
+    if (!data) {
+      setErro('Viagem não encontrada')
+      setLoading(false)
+      return
     }
 
     setViagem(data)
@@ -119,8 +131,8 @@ function AcompanharViagem() {
     return nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
   }
 
-  // Número de contato da agência (fixo por enquanto)
-  const telefoneAgencia = '81999999999' // Substituir pelo número real
+  // Número de contato da agência
+  const telefoneAgencia = '81999473200'
 
   if (loading) {
     return (

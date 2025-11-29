@@ -46,7 +46,8 @@ function NovaViagem() {
     e.preventDefault()
     setSalvando(true)
 
-    const data_hora = `${form.data}T${form.hora}:00`
+    // Adiciona timezone de Brasília (-03:00) para salvar corretamente
+    const data_hora = `${form.data}T${form.hora}:00-03:00`
 
     const dados = {
       passageiro_nome: form.passageiro_nome,
