@@ -24,7 +24,7 @@ function AcompanharViagem() {
     if (!isNaN(idNumerico)) {
       const { data: dataById, error: errorById } = await supabase
         .from('viagens')
-        .select('*, motoristas(id, nome, telefone, marca_modelo, cor, placa)')
+        .select('*, motoristas(id, nome, telefone, marca_modelo, cor, placa, foto_url)')
         .eq('id', idNumerico)
         .single()
       
@@ -37,7 +37,7 @@ function AcompanharViagem() {
     if (!data) {
       const { data: dataByToken, error: errorByToken } = await supabase
         .from('viagens')
-        .select('*, motoristas(id, nome, telefone, marca_modelo, cor, placa)')
+        .select('*, motoristas(id, nome, telefone, marca_modelo, cor, placa, foto_url)')
         .eq('token_cliente', token)
         .single()
       
@@ -386,20 +386,33 @@ function AcompanharViagem() {
             </h2>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{
-                width: 60,
-                height: 60,
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'white',
-                fontSize: 20,
-                fontWeight: 700
-              }}>
-                {getIniciais(viagem.motoristas.nome)}
-              </div>
+              {viagem.motoristas.foto_url ? (
+                <img 
+                  src={viagem.motoristas.foto_url} 
+                  alt={viagem.motoristas.nome}
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    objectFit: 'cover'
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'white',
+                  fontSize: 20,
+                  fontWeight: 700
+                }}>
+                  {getIniciais(viagem.motoristas.nome)}
+                </div>
+              )}
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 18 }}>{viagem.motoristas.nome}</div>
                 {viagem.motoristas.marca_modelo && (

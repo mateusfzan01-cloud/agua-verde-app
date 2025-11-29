@@ -152,19 +152,32 @@ function Motoristas() {
               background: motorista.ativo ? 'var(--verde-escuro)' : '#666',
               color: 'white'
             }}>
-              <div style={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 18,
-                fontWeight: 600
-              }}>
-                {getIniciais(motorista.nome)}
-              </div>
+              {motorista.foto_url ? (
+                <img 
+                  src={motorista.foto_url} 
+                  alt={motorista.nome}
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    objectFit: 'cover'
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 18,
+                  fontWeight: 600
+                }}>
+                  {getIniciais(motorista.nome)}
+                </div>
+              )}
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 16 }}>{motorista.nome}</div>
                 <div style={{ 
