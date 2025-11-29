@@ -497,7 +497,7 @@ function AcompanharViagem() {
           <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: 600 }}>Precisa de Ajuda?</h3>
           
           <div style={{ display: 'flex', gap: '12px' }}>
-            
+            <a
               href={`tel:${telefoneContato}`}
               style={{
                 flex: 1,
@@ -518,7 +518,7 @@ function AcompanharViagem() {
               </svg>
               Ligar
             </a>
-            
+            <a
               href={`https://wa.me/55${telefoneContato.replace(/\D/g, '')}`}
               style={{
                 flex: 1,

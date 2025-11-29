@@ -11,7 +11,9 @@ function NovaViagem() {
     passageiro_telefone: '',
     passageiro_email: '',
     quantidade_passageiros: 1,
-    quantidade_bagagens: 0,
+    bagagens_grandes: 0,
+    bagagens_pequenas: 0,
+    compartilhar_telefone: false,
     origem: '',
     destino: '',
     data: '',
@@ -36,8 +38,8 @@ function NovaViagem() {
   }
 
   function handleChange(e) {
-    const { name, value } = e.target
-    setForm({ ...form, [name]: value })
+    const { name, value, type, checked } = e.target
+    setForm({ ...form, [name]: type === 'checkbox' ? checked : value })
   }
 
   async function handleSubmit(e) {
@@ -51,7 +53,9 @@ function NovaViagem() {
       passageiro_telefone: form.passageiro_telefone,
       passageiro_email: form.passageiro_email || null,
       quantidade_passageiros: parseInt(form.quantidade_passageiros) || 1,
-      quantidade_bagagens: parseInt(form.quantidade_bagagens) || 0,
+      bagagens_grandes: parseInt(form.bagagens_grandes) || 0,
+      bagagens_pequenas: parseInt(form.bagagens_pequenas) || 0,
+      compartilhar_telefone: form.compartilhar_telefone,
       origem: form.origem,
       destino: form.destino,
       data_hora: data_hora,
@@ -77,6 +81,8 @@ function NovaViagem() {
 
     setSalvando(false)
   }
+
+  const totalBagagens = (parseInt(form.bagagens_grandes) || 0) + (parseInt(form.bagagens_pequenas) || 0)
 
   return (
     <>
@@ -111,15 +117,42 @@ function NovaViagem() {
               </div>
               <div className="form-group">
                 <label className="form-label">Telefone *</label>
-                <input
-                  type="tel"
-                  name="passageiro_telefone"
-                  className="form-input"
-                  placeholder="(00) 00000-0000"
-                  value={form.passageiro_telefone}
-                  onChange={handleChange}
-                  required
-                />
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                  <input
+                    type="tel"
+                    name="passageiro_telefone"
+                    className="form-input"
+                    placeholder="(00) 00000-0000"
+                    value={form.passageiro_telefone}
+                    onChange={handleChange}
+                    required
+                    style={{ flex: 1 }}
+                  />
+                </div>
+                {/* Checkbox compartilhar telefone */}
+                <label style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 8, 
+                  marginTop: 8,
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  color: 'var(--cinza-texto)'
+                }}>
+                  <input
+                    type="checkbox"
+                    name="compartilhar_telefone"
+                    checked={form.compartilhar_telefone}
+                    onChange={handleChange}
+                    style={{ 
+                      width: 18, 
+                      height: 18, 
+                      accentColor: 'var(--verde-claro)',
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <span>Compartilhar telefone com o motorista</span>
+                </label>
               </div>
             </div>
             <div className="form-row">
@@ -136,20 +169,6 @@ function NovaViagem() {
                 />
               </div>
               <div className="form-group">
-                <label className="form-label">Quantidade de bagagens</label>
-                <input
-                  type="number"
-                  name="quantidade_bagagens"
-                  className="form-input"
-                  placeholder="0"
-                  min="0"
-                  value={form.quantidade_bagagens}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-            <div className="form-row">
-              <div className="form-group">
                 <label className="form-label">Email <span className="optional">(opcional)</span></label>
                 <input
                   type="email"
@@ -161,6 +180,51 @@ function NovaViagem() {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Bagagens */}
+          <div className="form-section">
+            <h2 className="section-title">Bagagens</h2>
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Bagagens grandes (23kg)</label>
+                <input
+                  type="number"
+                  name="bagagens_grandes"
+                  className="form-input"
+                  placeholder="0"
+                  min="0"
+                  value={form.bagagens_grandes}
+                  onChange={handleChange}
+                />
+                <p className="form-hint">Malas de porão, malas grandes</p>
+              </div>
+              <div className="form-group">
+                <label className="form-label">Bagagens pequenas (10kg)</label>
+                <input
+                  type="number"
+                  name="bagagens_pequenas"
+                  className="form-input"
+                  placeholder="0"
+                  min="0"
+                  value={form.bagagens_pequenas}
+                  onChange={handleChange}
+                />
+                <p className="form-hint">Mochilas, malas de mão</p>
+              </div>
+            </div>
+            {totalBagagens > 0 && (
+              <div style={{
+                padding: 12,
+                background: 'var(--cinza-claro)',
+                borderRadius: 8,
+                fontSize: 14,
+                color: 'var(--verde-escuro)',
+                fontWeight: 500
+              }}>
+                Total: {totalBagagens} {totalBagagens === 1 ? 'volume' : 'volumes'}
+              </div>
+            )}
           </div>
 
           {/* Trajeto */}
