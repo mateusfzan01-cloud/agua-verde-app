@@ -627,7 +627,7 @@ function MotoristaApp() {
               width: '42px',
               height: '42px',
               borderRadius: '50%',
-              background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)',
+              background: perfil?.foto_url ? 'transparent' : 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)',
               color: 'white',
               border: 'none',
               fontSize: '14px',
@@ -635,10 +635,20 @@ function MotoristaApp() {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              overflow: 'hidden',
+              padding: 0
             }}
           >
-            {getIniciais(perfil?.nome)}
+            {perfil?.foto_url ? (
+              <img 
+                src={perfil.foto_url} 
+                alt={perfil?.nome}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              getIniciais(perfil?.nome)
+            )}
           </button>
         </div>
       </div>
@@ -1266,6 +1276,14 @@ function PerfilMotorista({ perfil, user, logout, voltar, getIniciais }) {
       .from('perfis')
       .update({ foto_url: novaUrl })
       .eq('id', user.id)
+
+    // Também atualizar na tabela motoristas
+    if (perfil?.motorista_id) {
+      await supabase
+        .from('motoristas')
+        .update({ foto_url: novaUrl })
+        .eq('id', perfil.motorista_id)
+    }
 
     if (updateError) {
       setMensagem('Erro ao salvar foto')

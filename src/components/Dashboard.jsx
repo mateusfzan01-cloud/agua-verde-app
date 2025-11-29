@@ -24,7 +24,7 @@ function Dashboard() {
 
     const { data: viagensData, error: viagensError } = await supabase
       .from('viagens')
-      .select('*, motoristas(id, nome)')
+      .select('*, motoristas(id, nome, foto_url)')
       .gte('data_hora', hoje.toISOString())
       .lt('data_hora', amanha.toISOString())
       .order('data_hora', { ascending: true })
@@ -43,10 +43,10 @@ function Dashboard() {
       setStats({ total, pendentes, emAndamento, concluidas })
     }
 
-    // Buscar motoristas
+    // Buscar motoristas com foto
     const { data: motoristasData, error: motoristasError } = await supabase
       .from('motoristas')
-      .select('*')
+      .select('*, foto_url')
       .eq('ativo', true)
 
     if (motoristasError) {
@@ -78,9 +78,50 @@ function Dashboard() {
       'aguardando_passageiro': 'Aguardando',
       'em_andamento': 'Em Andamento',
       'concluida': 'Concluída',
-      'cancelada': 'Cancelada'
+      'cancelada': 'Cancelada',
+      'no_show': 'No-Show'
     }
     return statusMap[status] || status
+  }
+
+  // Componente de Avatar reutilizável
+  function Avatar({ nome, fotoUrl, tamanho = 'normal' }) {
+    const tamanhos = {
+      small: { width: 28, height: 28, fontSize: 11 },
+      normal: { width: 40, height: 40, fontSize: 14 }
+    }
+    const t = tamanhos[tamanho] || tamanhos.normal
+
+    if (fotoUrl) {
+      return (
+        <img 
+          src={fotoUrl} 
+          alt={nome}
+          style={{
+            width: t.width,
+            height: t.height,
+            borderRadius: '50%',
+            objectFit: 'cover'
+          }}
+        />
+      )
+    }
+
+    return (
+      <div 
+        className={tamanho === 'small' ? 'driver-avatar-small' : 'driver-avatar'}
+        style={{
+          width: t.width,
+          height: t.height,
+          fontSize: t.fontSize,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        {getIniciais(nome)}
+      </div>
+    )
   }
 
   const dataHoje = new Date().toLocaleDateString('pt-BR', { 
@@ -171,7 +212,11 @@ function Dashboard() {
                     <td>
                       {viagem.motoristas ? (
                         <div className="driver-cell">
-                          <div className="driver-avatar-small">{getIniciais(viagem.motoristas.nome)}</div>
+                          <Avatar 
+                            nome={viagem.motoristas.nome} 
+                            fotoUrl={viagem.motoristas.foto_url} 
+                            tamanho="small" 
+                          />
                           <span>{viagem.motoristas.nome.split(' ')[0]}</span>
                         </div>
                       ) : (
@@ -239,7 +284,11 @@ function Dashboard() {
                 
                 return (
                   <div key={motorista.id} className="driver-item">
-                    <div className="driver-avatar">{getIniciais(motorista.nome)}</div>
+                    <Avatar 
+                      nome={motorista.nome} 
+                      fotoUrl={motorista.foto_url} 
+                      tamanho="normal" 
+                    />
                     <div className="driver-info">
                       <div className="driver-name">{motorista.nome}</div>
                       <div className="driver-trips">{viagensMotorista.length} viagens hoje</div>
