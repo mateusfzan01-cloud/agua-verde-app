@@ -42,6 +42,9 @@ function MotoristaApp() {
       carregarViagensNaoLidas()
     }
   }, [perfil])
+
+  useEffect(() => {
+    if (perfil?.motorista_id) {
       if (visualizacao === 'dia') {
         carregarViagensDia()
       } else {
