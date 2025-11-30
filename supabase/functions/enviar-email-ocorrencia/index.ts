@@ -84,7 +84,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Agua Verde Turismo <noreply@aguaverdeturismo.com.br>',
+        from: 'Agua Verde Turismo <noreply@aguaverde.tur.br>',
         to: [ADMIN_EMAIL],
         subject: `[OCORRENCIA] ${tipoFormatado} - Viagem #${viagem.id}`,
         html: `
