@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
+import { useAuth } from '../contexts/AuthContext'
 
 function Motoristas() {
+  const { user } = useAuth()
   const [motoristas, setMotoristas] = useState([])
   const [loading, setLoading] = useState(true)
   const [modalAberto, setModalAberto] = useState(false)
@@ -14,6 +16,13 @@ function Motoristas() {
     cor: '',
     placa: ''
   })
+
+  // Estado para modal de convite
+  const [modalConvite, setModalConvite] = useState(null)
+  const [emailConvite, setEmailConvite] = useState('')
+  const [linkConvite, setLinkConvite] = useState('')
+  const [gerandoConvite, setGerandoConvite] = useState(false)
+  const [copiado, setCopiado] = useState(false)
 
   useEffect(() => {
     fetchMotoristas()
@@ -99,10 +108,81 @@ function Motoristas() {
       .from('motoristas')
       .update({ ativo: !motorista.ativo })
       .eq('id', motorista.id)
-    
+
     if (!error) {
       fetchMotoristas()
     }
+  }
+
+  function abrirModalConvite(motorista) {
+    setModalConvite(motorista)
+    setEmailConvite(motorista.email || '')
+    setLinkConvite('')
+    setCopiado(false)
+  }
+
+  function fecharModalConvite() {
+    setModalConvite(null)
+    setEmailConvite('')
+    setLinkConvite('')
+    setCopiado(false)
+  }
+
+  async function gerarConvite() {
+    if (!emailConvite || !emailConvite.includes('@')) {
+      alert('Informe um email valido')
+      return
+    }
+
+    setGerandoConvite(true)
+
+    try {
+      // Gerar token unico
+      const token = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
+
+      // Criar convite no banco
+      const { data, error } = await supabase
+        .from('motorista_convites')
+        .insert([{
+          motorista_id: modalConvite.id,
+          email: emailConvite,
+          token: token,
+          criado_por: user?.id
+        }])
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Erro ao criar convite:', error)
+        alert('Erro ao gerar convite. Verifique se a tabela motorista_convites existe.')
+        setGerandoConvite(false)
+        return
+      }
+
+      // Gerar link
+      const baseUrl = window.location.origin
+      const link = `${baseUrl}/convite/${token}`
+      setLinkConvite(link)
+    } catch (err) {
+      console.error('Erro:', err)
+      alert('Erro ao gerar convite')
+    }
+
+    setGerandoConvite(false)
+  }
+
+  function copiarLink() {
+    navigator.clipboard.writeText(linkConvite)
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2000)
+  }
+
+  function enviarWhatsApp() {
+    const mensagem = `Ola ${modalConvite.nome}!%0A%0AVoce foi convidado a fazer parte da equipe Agua Verde Turismo.%0A%0AClique no link abaixo para criar sua conta:%0A${linkConvite}%0A%0AEste link expira em 7 dias.`
+    const telefone = modalConvite.telefone?.replace(/\D/g, '')
+    window.open(`https://wa.me/55${telefone}?text=${mensagem}`, '_blank')
   }
 
   function getIniciais(nome) {
@@ -254,8 +334,8 @@ function Motoristas() {
               )}
 
               {/* Ações */}
-              <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-                <button 
+              <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+                <button
                   onClick={() => abrirModal(motorista)}
                   style={{
                     flex: 1,
@@ -265,12 +345,30 @@ function Motoristas() {
                     borderRadius: 6,
                     cursor: 'pointer',
                     fontSize: 13,
-                    fontWeight: 500
+                    fontWeight: 500,
+                    minWidth: 80
                   }}
                 >
                   Editar
                 </button>
-                <button 
+                <button
+                  onClick={() => abrirModalConvite(motorista)}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    background: '#e3f2fd',
+                    border: '1px solid #bbdefb',
+                    borderRadius: 6,
+                    cursor: 'pointer',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: '#1565c0',
+                    minWidth: 80
+                  }}
+                >
+                  Convidar
+                </button>
+                <button
                   onClick={() => toggleAtivo(motorista)}
                   style={{
                     flex: 1,
@@ -281,7 +379,8 @@ function Motoristas() {
                     cursor: 'pointer',
                     fontSize: 13,
                     fontWeight: 500,
-                    color: motorista.ativo ? '#c62828' : '#2e7d32'
+                    color: motorista.ativo ? '#c62828' : '#2e7d32',
+                    minWidth: 80
                   }}
                 >
                   {motorista.ativo ? 'Desativar' : 'Ativar'}
@@ -534,6 +633,253 @@ function Motoristas() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Convite */}
+      {modalConvite && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 20,
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 16,
+            width: '100%',
+            maxWidth: 450,
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              padding: '20px 24px',
+              borderBottom: '1px solid #eee',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h2 style={{ margin: 0, fontSize: 20 }}>
+                Convidar Motorista
+              </h2>
+              <button
+                onClick={fecharModalConvite}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: 24,
+                  cursor: 'pointer',
+                  color: '#999'
+                }}
+              >
+                x
+              </button>
+            </div>
+
+            <div style={{ padding: 24 }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                marginBottom: 20,
+                padding: 16,
+                background: '#f8f9fa',
+                borderRadius: 8
+              }}>
+                {modalConvite.foto_url ? (
+                  <img
+                    src={modalConvite.foto_url}
+                    alt={modalConvite.nome}
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: '50%',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: '50%',
+                    background: 'var(--verde-escuro)',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 18,
+                    fontWeight: 600
+                  }}>
+                    {getIniciais(modalConvite.nome)}
+                  </div>
+                )}
+                <div>
+                  <div style={{ fontWeight: 600 }}>{modalConvite.nome}</div>
+                  <div style={{ fontSize: 13, color: '#666' }}>{modalConvite.telefone}</div>
+                </div>
+              </div>
+
+              {!linkConvite ? (
+                <>
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
+                      Email do motorista *
+                    </label>
+                    <input
+                      type="email"
+                      value={emailConvite}
+                      onChange={(e) => setEmailConvite(e.target.value)}
+                      placeholder="email@exemplo.com"
+                      style={{
+                        width: '100%',
+                        padding: 14,
+                        border: '2px solid #e0e0e0',
+                        borderRadius: 8,
+                        fontSize: 16,
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                    <p style={{ fontSize: 12, color: '#666', marginTop: 6 }}>
+                      Este email sera usado para login do motorista no app
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={gerarConvite}
+                    disabled={gerandoConvite || !emailConvite}
+                    style={{
+                      width: '100%',
+                      padding: 14,
+                      background: gerandoConvite || !emailConvite ? '#ccc' : 'var(--verde-escuro)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: 8,
+                      fontSize: 15,
+                      fontWeight: 600,
+                      cursor: gerandoConvite || !emailConvite ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {gerandoConvite ? 'Gerando...' : 'Gerar Link de Convite'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div style={{
+                    padding: 16,
+                    background: '#e8f5e9',
+                    borderRadius: 8,
+                    marginBottom: 16
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      marginBottom: 8,
+                      color: '#2e7d32',
+                      fontWeight: 600
+                    }}>
+                      <svg viewBox="0 0 24 24" style={{ width: 20, height: 20, fill: '#2e7d32' }}>
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                      </svg>
+                      Link gerado com sucesso!
+                    </div>
+                    <p style={{ fontSize: 13, color: '#666', margin: 0 }}>
+                      Este link expira em 7 dias
+                    </p>
+                  </div>
+
+                  <div style={{ marginBottom: 16 }}>
+                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 500, fontSize: 14 }}>
+                      Link de convite
+                    </label>
+                    <div style={{
+                      display: 'flex',
+                      gap: 8
+                    }}>
+                      <input
+                        type="text"
+                        value={linkConvite}
+                        readOnly
+                        style={{
+                          flex: 1,
+                          padding: 12,
+                          border: '2px solid #e0e0e0',
+                          borderRadius: 8,
+                          fontSize: 13,
+                          background: '#f5f5f5'
+                        }}
+                      />
+                      <button
+                        onClick={copiarLink}
+                        style={{
+                          padding: '12px 16px',
+                          background: copiado ? '#27ae60' : '#3498db',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: 8,
+                          cursor: 'pointer',
+                          fontWeight: 500,
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {copiado ? 'Copiado!' : 'Copiar'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {modalConvite.telefone && (
+                    <button
+                      onClick={enviarWhatsApp}
+                      style={{
+                        width: '100%',
+                        padding: 14,
+                        background: '#25d366',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 8,
+                        fontSize: 15,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" style={{ width: 20, height: 20, fill: 'white' }}>
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                      </svg>
+                      Enviar via WhatsApp
+                    </button>
+                  )}
+
+                  <button
+                    onClick={fecharModalConvite}
+                    style={{
+                      width: '100%',
+                      padding: 14,
+                      background: '#f0f0f0',
+                      color: '#333',
+                      border: 'none',
+                      borderRadius: 8,
+                      fontSize: 15,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      marginTop: 12
+                    }}
+                  >
+                    Fechar
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}

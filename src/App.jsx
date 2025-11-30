@@ -11,6 +11,8 @@ import Login from './components/Login'
 import MotoristaApp from './components/MotoristaApp'
 import Perfil from './components/Perfil'
 import AcompanharViagem from './components/AcompanharViagem'
+import AceitarConvite from './components/AceitarConvite'
+import Relatorios from './components/Relatorios'
 
 function AppContent() {
   const { user, perfil, loading } = useAuth()
@@ -55,6 +57,7 @@ function AppContent() {
           <Route path="/viagens/:id" element={<DetalheViagem />} />
           <Route path="/viagens/:id/editar" element={<EditarViagem />} />
           <Route path="/motoristas" element={<Motoristas />} />
+          <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/perfil" element={<Perfil />} />
         </Routes>
       </main>
@@ -68,7 +71,10 @@ function App() {
       <Routes>
         {/* Rota pública - página de acompanhamento do cliente */}
         <Route path="/acompanhar/:token" element={<AcompanharViagem />} />
-        
+
+        {/* Rota pública - aceitar convite de motorista */}
+        <Route path="/convite/:token" element={<AceitarConvite />} />
+
         {/* Rotas protegidas */}
         <Route path="/*" element={<AppContent />} />
       </Routes>

@@ -143,12 +143,44 @@ function MotoristaApp() {
   }
 
   async function atualizarStatus(viagemId, novoStatus) {
+    const agora = new Date().toISOString()
+
+    // Preparar dados de update com timestamp apropriado
+    const updateData = { status: novoStatus }
+
+    // Adicionar timestamp específico para cada mudança de status
+    switch (novoStatus) {
+      case 'a_caminho':
+        updateData.timestamp_iniciou_deslocamento = agora
+        break
+      case 'aguardando_passageiro':
+        updateData.timestamp_chegou_local = agora
+        break
+      case 'em_andamento':
+        updateData.timestamp_passageiro_embarcou = agora
+        break
+    }
+
     const { error } = await supabase
       .from('viagens')
-      .update({ status: novoStatus })
+      .update(updateData)
       .eq('id', viagemId)
 
     if (!error) {
+      // Registrar ocorrência com timestamp
+      const descricaoStatus = {
+        'a_caminho': 'Motorista iniciou deslocamento',
+        'aguardando_passageiro': 'Motorista chegou no local',
+        'em_andamento': 'Passageiro embarcou - Viagem iniciada'
+      }
+
+      await supabase.from('ocorrencias').insert([{
+        viagem_id: viagemId,
+        tipo: 'alteracao_status',
+        descricao: descricaoStatus[novoStatus] || `Status alterado para: ${novoStatus}`,
+        registrado_por: perfil.nome
+      }])
+
       carregarViagensDia()
     }
   }
@@ -193,7 +225,8 @@ function MotoristaApp() {
         bagagens_grandes_confirmadas: parseInt(dadosConfirmacao.bagagens_grandes),
         bagagens_pequenas_confirmadas: parseInt(dadosConfirmacao.bagagens_pequenas),
         horario_saida_real: horarioSaida?.toISOString() || null,
-        horario_chegada_real: horarioChegada?.toISOString() || null
+        horario_chegada_real: horarioChegada?.toISOString() || null,
+        timestamp_viagem_concluida: agora.toISOString()
       })
       .eq('id', modalConfirmacao.id)
 
@@ -418,9 +451,9 @@ function MotoristaApp() {
       case 'a_caminho':
         return { texto: 'Cheguei no Local', proximo: 'aguardando_passageiro', cor: '#9b59b6' }
       case 'aguardando_passageiro':
-        return { texto: 'Iniciar Viagem', proximo: 'em_andamento', cor: '#f39c12' }
+        return { texto: 'Passageiro Embarcou', proximo: 'em_andamento', cor: '#f39c12' }
       case 'em_andamento':
-        return { texto: 'Concluir Viagem', proximo: 'concluida', cor: '#27ae60', abreModal: true }
+        return { texto: 'Viagem Concluida', proximo: 'concluida', cor: '#27ae60', abreModal: true }
       default:
         return null
     }

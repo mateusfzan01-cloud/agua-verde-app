@@ -44,6 +44,14 @@ function Sidebar() {
           </svg>
           <span>Motoristas</span>
         </NavLink>
+
+        <NavLink to="/relatorios" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+          <svg className="nav-icon" viewBox="0 0 24 24">
+            <path d="M21 21H3V3h18v18z" fill="none" stroke="currentColor" strokeWidth="2"/>
+            <path d="M7 14v4M11 10v8M15 6v12M19 3v15" fill="none" stroke="currentColor" strokeWidth="2"/>
+          </svg>
+          <span>Relatorios</span>
+        </NavLink>
       </ul>
 
       <div className="user-info">
