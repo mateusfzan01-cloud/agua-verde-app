@@ -9,6 +9,7 @@ function MotoristaApp() {
   const [carregando, setCarregando] = useState(true)
   const [dataAtual, setDataAtual] = useState(new Date())
   const [modalOcorrencia, setModalOcorrencia] = useState(null)
+  const [tipoOcorrencia, setTipoOcorrencia] = useState('outro')
   const [textoOcorrencia, setTextoOcorrencia] = useState('')
   const [mostrarPerfil, setMostrarPerfil] = useState(false)
   const [visualizacao, setVisualizacao] = useState('dia')
@@ -403,13 +404,14 @@ function MotoristaApp() {
       .insert({
         viagem_id: modalOcorrencia,
         descricao: textoOcorrencia,
-        tipo: 'outro',
+        tipo: tipoOcorrencia,
         registrado_por: perfil.nome
       })
 
     if (!error) {
       setModalOcorrencia(null)
       setTextoOcorrencia('')
+      setTipoOcorrencia('outro')
       alert('Ocorrencia registrada!')
     }
   }
@@ -860,17 +862,44 @@ function MotoristaApp() {
         }}>
           <div style={{ background: 'white', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '400px' }}>
             <h3 style={{ margin: '0 0 16px' }}>Registrar Ocorrencia</h3>
-            <textarea
-              value={textoOcorrencia}
-              onChange={(e) => setTextoOcorrencia(e.target.value)}
-              placeholder="Descreva a ocorrencia..."
-              style={{
-                width: '100%', minHeight: '120px', padding: '12px', border: '2px solid #e0e0e0',
-                borderRadius: '8px', fontSize: '16px', resize: 'vertical', boxSizing: 'border-box'
-              }}
-            />
-            <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-              <button onClick={() => setModalOcorrencia(null)} style={{
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500, fontSize: '14px' }}>
+                Tipo
+              </label>
+              <select
+                value={tipoOcorrencia}
+                onChange={(e) => setTipoOcorrencia(e.target.value)}
+                style={{
+                  width: '100%', padding: '12px', border: '2px solid #e0e0e0',
+                  borderRadius: '8px', fontSize: '16px', boxSizing: 'border-box',
+                  background: 'white'
+                }}
+              >
+                <option value="atraso_voo">Atraso de voo</option>
+                <option value="atraso_motorista">Atraso do motorista</option>
+                <option value="atraso_passageiro">Atraso do passageiro</option>
+                <option value="outro">Outro</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontWeight: 500, fontSize: '14px' }}>
+                Descricao
+              </label>
+              <textarea
+                value={textoOcorrencia}
+                onChange={(e) => setTextoOcorrencia(e.target.value)}
+                placeholder="Descreva a ocorrencia..."
+                style={{
+                  width: '100%', minHeight: '120px', padding: '12px', border: '2px solid #e0e0e0',
+                  borderRadius: '8px', fontSize: '16px', resize: 'vertical', boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={() => { setModalOcorrencia(null); setTipoOcorrencia('outro'); setTextoOcorrencia(''); }} style={{
                 flex: 1, padding: '12px', background: '#f0f0f0', border: 'none',
                 borderRadius: '8px', cursor: 'pointer', fontWeight: 500
               }}>
