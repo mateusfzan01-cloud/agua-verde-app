@@ -24,7 +24,7 @@ COMMENT ON COLUMN viagens.timestamp_viagem_concluida IS 'Horario em que a viagem
 
 CREATE TABLE IF NOT EXISTS motorista_convites (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  motorista_id INTEGER REFERENCES motoristas(id) ON DELETE CASCADE,
+  motorista_id UUID REFERENCES motoristas(id) ON DELETE CASCADE,
   email VARCHAR(255) NOT NULL,
   token VARCHAR(255) UNIQUE NOT NULL,
   status VARCHAR(20) DEFAULT 'pendente' CHECK (status IN ('pendente', 'aceito', 'expirado')),
@@ -42,18 +42,27 @@ CREATE INDEX IF NOT EXISTS idx_motorista_convites_status ON motorista_convites(s
 -- RLS (Row Level Security) para a tabela de convites
 ALTER TABLE motorista_convites ENABLE ROW LEVEL SECURITY;
 
--- Politica: Admins podem ver todos os convites
-CREATE POLICY IF NOT EXISTS "Admins podem gerenciar convites" ON motorista_convites
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM perfis
-      WHERE perfis.id = auth.uid()
-      AND perfis.tipo IN ('admin', 'gerente')
-    )
+-- RLS para a tabela perfis
+ALTER TABLE perfis ENABLE ROW LEVEL SECURITY;
+
+-- Funcao auxiliar para verificar se usuario e admin (evita referencia circular em policies)
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM perfis
+    WHERE perfis.id = auth.uid()
+    AND perfis.tipo IN ('admin', 'gerente')
   );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Politica: Admins podem ver todos os convites
+CREATE POLICY "Admins podem gerenciar convites" ON motorista_convites
+  FOR ALL USING (is_admin());
 
 -- Politica: Qualquer pessoa pode verificar um convite pelo token (para pagina de aceite)
-CREATE POLICY IF NOT EXISTS "Publico pode verificar convite" ON motorista_convites
+CREATE POLICY "Publico pode verificar convite" ON motorista_convites
   FOR SELECT USING (true);
 
 
