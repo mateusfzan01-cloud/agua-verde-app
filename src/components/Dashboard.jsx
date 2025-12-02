@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import AlertasPanel from './AlertasPanel'
 
 function Dashboard() {
   const [viagens, setViagens] = useState([])
@@ -237,39 +238,8 @@ function Dashboard() {
 
         {/* Right Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Alerts */}
-          <div className="card">
-            <div className="card-header">
-              <h2 className="card-title">Alertas</h2>
-            </div>
-            <div className="alerts-list">
-              {viagens.filter(v => v.status === 'pendente').length > 0 ? (
-                viagens.filter(v => v.status === 'pendente').map(v => (
-                  <div key={v.id} className="alert-item danger">
-                    <svg className="alert-icon" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" strokeWidth="1.5">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="12" y1="8" x2="12" y2="12"/>
-                      <line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                    <div className="alert-content">
-                      <div className="alert-title">Viagem sem motorista</div>
-                      <div className="alert-desc">{v.passageiro_nome} - {formatarHora(v.data_hora)}</div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="alert-item info">
-                  <svg className="alert-icon" viewBox="0 0 24 24" fill="none" stroke="var(--verde-claro)" strokeWidth="1.5">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  <div className="alert-content">
-                    <div className="alert-title">Tudo em ordem!</div>
-                    <div className="alert-desc">Todas as viagens têm motorista</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          {/* Alertas do Sistema */}
+          <AlertasPanel />
 
           {/* Drivers Status */}
           <div className="card">
