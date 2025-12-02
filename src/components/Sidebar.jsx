@@ -1,8 +1,10 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { useAlertas } from '../hooks/useAlertas'
 
 function Sidebar() {
   const { perfil, logout } = useAuth()
+  const { contador } = useAlertas()
 
   function getIniciais(nome) {
     return nome?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??'
@@ -51,6 +53,17 @@ function Sidebar() {
             <path d="M7 14v4M11 10v8M15 6v12M19 3v15" fill="none" stroke="currentColor" strokeWidth="2"/>
           </svg>
           <span>Relatorios</span>
+        </NavLink>
+
+        <NavLink to="/" className={({ isActive }) => `nav-item nav-item-alertas ${isActive ? '' : ''}`}>
+          <svg className="nav-icon" viewBox="0 0 24 24">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span>Alertas</span>
+          {contador > 0 && (
+            <span className="nav-badge">{contador > 99 ? '99+' : contador}</span>
+          )}
         </NavLink>
       </ul>
 
