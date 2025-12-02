@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabaseClient'
 
-export function useAlertas() {
+const AlertasContext = createContext({})
+
+export function AlertasProvider({ children }) {
   const [alertas, setAlertas] = useState([])
   const [alertasNaoLidos, setAlertasNaoLidos] = useState([])
   const [loading, setLoading] = useState(true)
@@ -124,7 +126,7 @@ export function useAlertas() {
     }
   }, [])
 
-  return {
+  const value = {
     alertas,
     alertasNaoLidos,
     loading,
@@ -133,6 +135,14 @@ export function useAlertas() {
     marcarComoLido,
     marcarTodosComoLidos
   }
+
+  return (
+    <AlertasContext.Provider value={value}>
+      {children}
+    </AlertasContext.Provider>
+  )
 }
 
-export default useAlertas
+export function useAlertas() {
+  return useContext(AlertasContext)
+}

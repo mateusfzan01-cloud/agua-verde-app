@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { AlertasProvider } from './contexts/AlertasContext'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import Viagens from './components/Viagens'
@@ -13,6 +14,7 @@ import Perfil from './components/Perfil'
 import AcompanharViagem from './components/AcompanharViagem'
 import AceitarConvite from './components/AceitarConvite'
 import Relatorios from './components/Relatorios'
+import Alertas from './components/Alertas'
 
 function AppContent() {
   const { user, perfil, loading } = useAuth()
@@ -47,21 +49,24 @@ function AppContent() {
 
   // Admin ou Gerente -> app desktop
   return (
-    <div className="app-container">
-      <Sidebar />
-      <main className="main-content">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/viagens" element={<Viagens />} />
-          <Route path="/viagens/nova" element={<NovaViagem />} />
-          <Route path="/viagens/:id" element={<DetalheViagem />} />
-          <Route path="/viagens/:id/editar" element={<EditarViagem />} />
-          <Route path="/motoristas" element={<Motoristas />} />
-          <Route path="/relatorios" element={<Relatorios />} />
-          <Route path="/perfil" element={<Perfil />} />
-        </Routes>
-      </main>
-    </div>
+    <AlertasProvider>
+      <div className="app-container">
+        <Sidebar />
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/viagens" element={<Viagens />} />
+            <Route path="/viagens/nova" element={<NovaViagem />} />
+            <Route path="/viagens/:id" element={<DetalheViagem />} />
+            <Route path="/viagens/:id/editar" element={<EditarViagem />} />
+            <Route path="/motoristas" element={<Motoristas />} />
+            <Route path="/relatorios" element={<Relatorios />} />
+            <Route path="/alertas" element={<Alertas />} />
+            <Route path="/perfil" element={<Perfil />} />
+          </Routes>
+        </main>
+      </div>
+    </AlertasProvider>
   )
 }
 

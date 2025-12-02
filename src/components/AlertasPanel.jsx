@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { useAlertas } from '../hooks/useAlertas'
+import { useAlertas } from '../contexts/AlertasContext'
 
 function AlertasPanel() {
   const navigate = useNavigate()

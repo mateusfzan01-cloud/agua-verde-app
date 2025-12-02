@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { useAlertas } from '../hooks/useAlertas'
+import { useAlertas } from '../contexts/AlertasContext'
 
 function Sidebar() {
   const { perfil, logout } = useAuth()
@@ -55,7 +55,7 @@ function Sidebar() {
           <span>Relatorios</span>
         </NavLink>
 
-        <NavLink to="/" className={({ isActive }) => `nav-item nav-item-alertas ${isActive ? '' : ''}`}>
+        <NavLink to="/alertas" className={({ isActive }) => `nav-item nav-item-alertas ${isActive ? 'active' : ''}`}>
           <svg className="nav-icon" viewBox="0 0 24 24">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
             <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
