@@ -22,6 +22,7 @@ function NovaViagem() {
     voo_companhia: '',
     motorista_id: '',
     valor: '',
+    moeda: 'BRL',
     observacoes: ''
   })
 
@@ -64,6 +65,7 @@ function NovaViagem() {
       voo_companhia: form.voo_companhia || null,
       motorista_id: form.motorista_id || null,
       valor: form.valor ? parseFloat(form.valor) : null,
+      moeda: form.moeda || 'BRL',
       observacoes: form.observacoes || null,
       status: form.motorista_id ? 'vinculada' : 'pendente'
     }
@@ -338,16 +340,30 @@ function NovaViagem() {
               </div>
               <div className="form-group">
                 <label className="form-label">Valor <span className="optional">(opcional)</span></label>
-                <input
-                  type="number"
-                  name="valor"
-                  className="form-input"
-                  placeholder="0.00"
-                  step="0.01"
-                  min="0"
-                  value={form.valor}
-                  onChange={handleChange}
-                />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <select
+                    name="moeda"
+                    className="form-select"
+                    value={form.moeda}
+                    onChange={handleChange}
+                    style={{ width: 90, flexShrink: 0 }}
+                  >
+                    <option value="BRL">R$</option>
+                    <option value="USD">US$</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                  <input
+                    type="number"
+                    name="valor"
+                    className="form-input"
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                    value={form.valor}
+                    onChange={handleChange}
+                    style={{ flex: 1 }}
+                  />
+                </div>
               </div>
             </div>
           </div>

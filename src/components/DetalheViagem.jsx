@@ -185,6 +185,16 @@ function DetalheViagem() {
     return tipos[tipo] || tipo
   }
 
+  function formatarValor(valor, moeda) {
+    const simbolos = {
+      'BRL': 'R$',
+      'USD': 'US$',
+      'EUR': 'EUR'
+    }
+    const simbolo = simbolos[moeda] || moeda || 'R$'
+    return `${simbolo} ${valor.toFixed(2)}`
+  }
+
   if (loading) {
     return <div className="loading">Carregando...</div>
   }
@@ -567,7 +577,7 @@ function DetalheViagem() {
               {viagem.valor && (
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Valor</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--verde-escuro)' }}>R$ {viagem.valor.toFixed(2)}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--verde-escuro)' }}>{formatarValor(viagem.valor, viagem.moeda)}</div>
                 </div>
               )}
               {viagem.observacoes && (

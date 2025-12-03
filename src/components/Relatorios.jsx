@@ -152,6 +152,16 @@ function Relatorios() {
     return nome?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??'
   }
 
+  function formatarValor(valor, moeda) {
+    const simbolos = {
+      'BRL': 'R$',
+      'USD': 'US$',
+      'EUR': 'EUR'
+    }
+    const simbolo = simbolos[moeda] || moeda || 'R$'
+    return `${simbolo} ${valor.toFixed(2)}`
+  }
+
   function aplicarPeriodoRapido(tipo) {
     const hoje = new Date()
     let inicio, fim
@@ -493,7 +503,7 @@ function Relatorios() {
                             <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                               {viagem.valor ? (
                                 <span style={{ fontWeight: 600, color: 'var(--verde-escuro)' }}>
-                                  R$ {viagem.valor.toFixed(2)}
+                                  {formatarValor(viagem.valor, viagem.moeda)}
                                 </span>
                               ) : (
                                 <span style={{ color: '#999' }}>-</span>
