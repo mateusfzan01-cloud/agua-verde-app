@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { useAuth } from '../contexts/AuthContext'
 
 function DetalheViagem() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { isAdmin } = useAuth()
   const [viagem, setViagem] = useState(null)
   const [ocorrencias, setOcorrencias] = useState([])
   const [motoristas, setMotoristas] = useState([])
   const [loading, setLoading] = useState(true)
   const [showOcorrencia, setShowOcorrencia] = useState(false)
   const [novaOcorrencia, setNovaOcorrencia] = useState({ tipo: 'outro', descricao: '' })
+  const [excluindo, setExcluindo] = useState(false)
 
   useEffect(() => {
     fetchViagem()
@@ -93,7 +96,7 @@ function DetalheViagem() {
 
   async function salvarOcorrencia(e) {
     e.preventDefault()
-    
+
     const { error } = await supabase.from('ocorrencias').insert([{
       viagem_id: parseInt(id),
       tipo: novaOcorrencia.tipo,
@@ -106,6 +109,26 @@ function DetalheViagem() {
       setNovaOcorrencia({ tipo: 'outro', descricao: '' })
       setShowOcorrencia(false)
       fetchViagem()
+    }
+  }
+
+  async function excluirViagem() {
+    if (!confirm('Tem certeza que deseja excluir esta viagem? Esta ação não pode ser desfeita.')) {
+      return
+    }
+
+    setExcluindo(true)
+
+    const { error } = await supabase
+      .from('viagens')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+
+    if (error) {
+      alert('Erro ao excluir viagem')
+      setExcluindo(false)
+    } else {
+      navigate('/viagens')
     }
   }
 
@@ -162,6 +185,16 @@ function DetalheViagem() {
     return tipos[tipo] || tipo
   }
 
+  function formatarValor(valor, moeda) {
+    const simbolos = {
+      'BRL': 'R$',
+      'USD': 'US$',
+      'EUR': 'EUR'
+    }
+    const simbolo = simbolos[moeda] || moeda || 'R$'
+    return `${simbolo} ${valor.toFixed(2)}`
+  }
+
   if (loading) {
     return <div className="loading">Carregando...</div>
   }
@@ -189,13 +222,40 @@ function DetalheViagem() {
             </p>
           </div>
         </div>
-       <div style={{ display: 'flex', gap: 12 }}>
+       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
   <button className="btn btn-secondary" onClick={() => navigate(`/viagens/${id}/editar`)}>
     Editar
   </button>
   {viagem.status !== 'cancelada' && viagem.status !== 'concluida' && viagem.status !== 'no_show' && (
     <button className="btn btn-danger" onClick={() => atualizarStatus('cancelada')}>
       Cancelar
+    </button>
+  )}
+  {isAdmin && (
+    <button
+      onClick={excluirViagem}
+      disabled={excluindo}
+      title="Excluir viagem"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 40,
+        height: 40,
+        padding: 0,
+        border: '1px solid #dc3545',
+        borderRadius: 8,
+        background: 'transparent',
+        cursor: excluindo ? 'not-allowed' : 'pointer',
+        opacity: excluindo ? 0.6 : 1
+      }}
+    >
+      <svg viewBox="0 0 24 24" style={{ width: 20, height: 20, stroke: '#dc3545', strokeWidth: 2, fill: 'none' }}>
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        <line x1="10" y1="11" x2="10" y2="17"/>
+        <line x1="14" y1="11" x2="14" y2="17"/>
+      </svg>
     </button>
   )}
 </div>
@@ -517,7 +577,7 @@ function DetalheViagem() {
               {viagem.valor && (
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Valor</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--verde-escuro)' }}>R$ {viagem.valor.toFixed(2)}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--verde-escuro)' }}>{formatarValor(viagem.valor, viagem.moeda)}</div>
                 </div>
               )}
               {viagem.observacoes && (

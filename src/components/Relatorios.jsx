@@ -26,7 +26,7 @@ function Relatorios() {
     canceladas: 0,
     noShow: 0,
     emAndamento: 0,
-    faturamento: 0
+    faturamentoPorMoeda: {}
   })
 
   // Ranking de motoristas
@@ -43,6 +43,7 @@ function Relatorios() {
     const { data: viagensData, error: viagensError } = await supabase
       .from('viagens')
       .select('*, motoristas(id, nome, telefone, foto_url)')
+      .is('deleted_at', null)
       .gte('data_hora', `${dataInicio}T00:00:00`)
       .lte('data_hora', `${dataFim}T23:59:59`)
       .order('data_hora', { ascending: false })
@@ -71,10 +72,17 @@ function Relatorios() {
     const noShow = dados.filter(v => v.status === 'no_show').length
     const emAndamento = dados.filter(v => ['vinculada', 'a_caminho', 'aguardando_passageiro', 'em_andamento'].includes(v.status)).length
 
-    // Calcular faturamento apenas das viagens concluidas com valor
-    const faturamento = dados
+    // Calcular faturamento por moeda apenas das viagens concluidas com valor
+    const faturamentoPorMoeda = {}
+    dados
       .filter(v => v.status === 'concluida' && v.valor)
-      .reduce((acc, v) => acc + (v.valor || 0), 0)
+      .forEach(v => {
+        const moeda = v.moeda || 'BRL'
+        if (!faturamentoPorMoeda[moeda]) {
+          faturamentoPorMoeda[moeda] = 0
+        }
+        faturamentoPorMoeda[moeda] += v.valor
+      })
 
     setMetricas({
       total,
@@ -82,7 +90,7 @@ function Relatorios() {
       canceladas,
       noShow,
       emAndamento,
-      faturamento
+      faturamentoPorMoeda
     })
   }
 
@@ -99,14 +107,18 @@ function Relatorios() {
             concluidas: 0,
             canceladas: 0,
             noShow: 0,
-            faturamento: 0
+            faturamentoPorMoeda: {}
           }
         }
         porMotorista[v.motorista_id].total++
         if (v.status === 'concluida') {
           porMotorista[v.motorista_id].concluidas++
           if (v.valor) {
-            porMotorista[v.motorista_id].faturamento += v.valor
+            const moeda = v.moeda || 'BRL'
+            if (!porMotorista[v.motorista_id].faturamentoPorMoeda[moeda]) {
+              porMotorista[v.motorista_id].faturamentoPorMoeda[moeda] = 0
+            }
+            porMotorista[v.motorista_id].faturamentoPorMoeda[moeda] += v.valor
           }
         }
         if (v.status === 'cancelada') {
@@ -149,6 +161,16 @@ function Relatorios() {
 
   function getIniciais(nome) {
     return nome?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??'
+  }
+
+  function formatarValor(valor, moeda) {
+    const simbolos = {
+      'BRL': 'R$',
+      'USD': 'US$',
+      'EUR': 'EUR'
+    }
+    const simbolo = simbolos[moeda] || moeda || 'R$'
+    return `${simbolo} ${valor.toFixed(2)}`
   }
 
   function aplicarPeriodoRapido(tipo) {
@@ -287,12 +309,31 @@ function Relatorios() {
               <div style={{ fontSize: 36, fontWeight: 700, color: '#f39c12' }}>{metricas.emAndamento}</div>
               <div style={{ fontSize: 14, color: '#666', marginTop: 4 }}>Em Andamento</div>
             </div>
-            <div className="card" style={{ padding: 20, textAlign: 'center', background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)' }}>
-              <div style={{ fontSize: 28, fontWeight: 700, color: 'white' }}>
-                R$ {metricas.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            {Object.keys(metricas.faturamentoPorMoeda).length > 0 ? (
+              Object.entries(metricas.faturamentoPorMoeda).map(([moeda, valor]) => {
+                const simbolos = { 'BRL': 'R$', 'USD': 'US$', 'EUR': 'EUR' }
+                const cores = {
+                  'BRL': 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)',
+                  'USD': 'linear-gradient(135deg, #2980b9 0%, #3498db 100%)',
+                  'EUR': 'linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%)'
+                }
+                return (
+                  <div key={moeda} className="card" style={{ padding: 20, textAlign: 'center', background: cores[moeda] || cores['BRL'] }}>
+                    <div style={{ fontSize: 28, fontWeight: 700, color: 'white' }}>
+                      {simbolos[moeda] || moeda} {valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </div>
+                    <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.9)', marginTop: 4 }}>Faturamento ({moeda})</div>
+                  </div>
+                )
+              })
+            ) : (
+              <div className="card" style={{ padding: 20, textAlign: 'center', background: 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)' }}>
+                <div style={{ fontSize: 28, fontWeight: 700, color: 'white' }}>
+                  R$ 0,00
+                </div>
+                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.9)', marginTop: 4 }}>Faturamento</div>
               </div>
-              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.9)', marginTop: 4 }}>Faturamento</div>
-            </div>
+            )}
           </div>
 
           <div className="content-grid">
@@ -368,9 +409,18 @@ function Relatorios() {
                         </div>
 
                         <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontWeight: 700, color: 'var(--verde-escuro)', fontSize: 14 }}>
-                            R$ {item.faturamento.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </div>
+                          {Object.keys(item.faturamentoPorMoeda).length > 0 ? (
+                            Object.entries(item.faturamentoPorMoeda).map(([moeda, valor]) => {
+                              const simbolos = { 'BRL': 'R$', 'USD': 'US$', 'EUR': 'EUR' }
+                              return (
+                                <div key={moeda} style={{ fontWeight: 700, color: 'var(--verde-escuro)', fontSize: 14 }}>
+                                  {simbolos[moeda] || moeda} {valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </div>
+                              )
+                            })
+                          ) : (
+                            <div style={{ fontWeight: 700, color: '#999', fontSize: 14 }}>-</div>
+                          )}
                           {item.noShow > 0 && (
                             <div style={{ fontSize: 11, color: '#c62828' }}>
                               {item.noShow} no-show
@@ -492,7 +542,7 @@ function Relatorios() {
                             <td style={{ padding: '12px 16px', textAlign: 'right' }}>
                               {viagem.valor ? (
                                 <span style={{ fontWeight: 600, color: 'var(--verde-escuro)' }}>
-                                  R$ {viagem.valor.toFixed(2)}
+                                  {formatarValor(viagem.valor, viagem.moeda)}
                                 </span>
                               ) : (
                                 <span style={{ color: '#999' }}>-</span>

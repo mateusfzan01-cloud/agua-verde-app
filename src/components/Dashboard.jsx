@@ -26,6 +26,7 @@ function Dashboard() {
     const { data: viagensData, error: viagensError } = await supabase
       .from('viagens')
       .select('*, motoristas(id, nome, foto_url)')
+      .is('deleted_at', null)
       .gte('data_hora', hoje.toISOString())
       .lt('data_hora', amanha.toISOString())
       .order('data_hora', { ascending: true })
