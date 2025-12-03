@@ -43,6 +43,7 @@ function Relatorios() {
     const { data: viagensData, error: viagensError } = await supabase
       .from('viagens')
       .select('*, motoristas(id, nome, telefone, foto_url)')
+      .is('deleted_at', null)
       .gte('data_hora', `${dataInicio}T00:00:00`)
       .lte('data_hora', `${dataFim}T23:59:59`)
       .order('data_hora', { ascending: false })

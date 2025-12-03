@@ -29,10 +29,11 @@ function Viagens() {
 
   async function fetchViagens() {
     setLoading(true)
-    
+
     let query = supabase
       .from('viagens')
       .select('*, motoristas(id, nome)')
+      .is('deleted_at', null)
       .order('data_hora', { ascending: false })
 
     const { data, error } = await query
@@ -42,7 +43,7 @@ function Viagens() {
     } else {
       setViagens(data || [])
     }
-    
+
     setLoading(false)
   }
 
