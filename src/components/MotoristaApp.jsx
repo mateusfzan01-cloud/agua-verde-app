@@ -552,10 +552,12 @@ function MotoristaApp() {
             {/* Dropdown */}
             {dropdownAberto && (
               <div style={{
-                position: 'absolute',
-                top: '50px',
-                right: '0',
-                width: '320px',
+                position: 'fixed',
+                top: '60px',
+                left: '16px',
+                right: '16px',
+                maxWidth: '320px',
+                marginLeft: 'auto',
                 maxHeight: '400px',
                 overflowY: 'auto',
                 background: 'white',
