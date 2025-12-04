@@ -180,9 +180,9 @@ function Motoristas() {
   }
 
   function enviarWhatsApp() {
-    const mensagem = `Ola ${modalConvite.nome}!%0A%0AVoce foi convidado a fazer parte da equipe Agua Verde Turismo.%0A%0AClique no link abaixo para criar sua conta:%0A${linkConvite}%0A%0AEste link expira em 7 dias.`
+    const mensagem = `Olá, ${modalConvite.nome}!\n\nVocê foi convidado a fazer parte da equipe Água Verde Turismo.\n\nClique no link abaixo para criar sua conta:\n${linkConvite}\n\nEste link expira em 7 dias.`
     const telefone = modalConvite.telefone?.replace(/\D/g, '')
-    window.open(`https://wa.me/55${telefone}?text=${mensagem}`, '_blank')
+    window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`, '_blank')
   }
 
   function getIniciais(nome) {

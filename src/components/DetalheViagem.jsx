@@ -625,15 +625,15 @@ function DetalheViagem() {
                 <button
                   onClick={() => {
                     const link = `https://agua-verde-app.vercel.app/acompanhar/${viagem.token_cliente || viagem.id}`
-                    
-                    let mensagem = `Ola ${viagem.passageiro_nome}!%0A%0A🚗 *Água Verde Turismo*%0A%0A📅 *Data:* ${data}%0A⏰ *Horário:* ${hora}%0A📍 *Origem:* ${viagem.origem}%0A📍 *Destino:* ${viagem.destino}`
-                    
+
+                    let mensagem = `Olá, ${viagem.passageiro_nome}!\n\n*Água Verde Turismo*\n\n*Data:* ${data}\n*Horário:* ${hora}\n*Origem:* ${viagem.origem}\n*Destino:* ${viagem.destino}`
+
                     if (viagem.motoristas) {
-                      mensagem += `%0A%0A👤 *Motorista:* ${viagem.motoristas.nome}`
+                      mensagem += `\n\n*Motorista:* ${viagem.motoristas.nome}`
                     }
-                    
-                    mensagem += `%0A%0A🔗 *Acompanhe sua viagem:*%0A${link}`
-                    
+
+                    mensagem += `\n\n*Acompanhe sua viagem:*\n${link}`
+
                     let telefone = viagem.passageiro_telefone.replace(/\D/g, '')
                     // Se tiver 10 ou 11 dígitos, é número brasileiro sem código do país
                     // Se tiver mais, já tem código do país (ex: +54 Argentina)
@@ -641,7 +641,7 @@ function DetalheViagem() {
                       telefone = '55' + telefone
                     }
                     console.log('Telefone cliente formatado:', telefone)
-                    window.open(`https://wa.me/${telefone}?text=${mensagem}`, '_blank')
+                    window.open(`https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`, '_blank')
                   }}
                   style={{
                     display: 'flex',
@@ -709,7 +709,7 @@ function DetalheViagem() {
     </div>
     <button
       onClick={() => {
-       const mensagem = `🚗 *Nova viagem atribuída!*%0A%0A📅 *Data:* ${data} as ${hora}%0A📍 *Origem:* ${viagem.origem}%0A📍 *Destino:* ${viagem.destino}%0A👤 *Passageiro:* ${viagem.passageiro_nome}%0A👥 *Quantidade:* ${viagem.quantidade_passageiros} pessoa(s)%0A🧳 *Bagagens:* ${(viagem.bagagens_grandes || 0)} grande(s) + ${(viagem.bagagens_pequenas || 0)} pequena(s)%0A%0A🔗 Acesse o app: https://agua-verde-app.vercel.app/`
+       const mensagem = `*Nova viagem atribuída!*\n\n*Data:* ${data} às ${hora}\n*Origem:* ${viagem.origem}\n*Destino:* ${viagem.destino}\n*Passageiro:* ${viagem.passageiro_nome}\n*Quantidade:* ${viagem.quantidade_passageiros} pessoa(s)\n*Bagagens:* ${(viagem.bagagens_grandes || 0)} grande(s)   ${(viagem.bagagens_pequenas || 0)} pequena(s)\n\n*Acesse o app:* https://agua-verde-app.vercel.app/`
         let telefone = viagem.motoristas.telefone.replace(/\D/g, '')
         // Se tiver 10 ou 11 dígitos, é número brasileiro sem código do país
         // Se tiver 12 ou 13 dígitos e começar com 55, já tem código do país
@@ -717,7 +717,7 @@ function DetalheViagem() {
           telefone = '55' + telefone
         }
         console.log('Telefone formatado:', telefone)
-        window.open(`https://wa.me/${telefone}?text=${mensagem}`, '_blank')
+        window.open(`https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`, '_blank')
       }}
       style={{
         display: 'flex',
