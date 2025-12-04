@@ -170,7 +170,7 @@ function AcompanharViagem() {
         }}>
           <div style={{ fontSize: 64, marginBottom: 16 }}>😕</div>
           <h1 style={{ margin: '0 0 8px', fontSize: 24, color: '#c62828' }}>Viagem não encontrada</h1>
-          <p style={{ color: '#666', margin: 0 }}>O link pode estar incorreto ou a viagem foi removida.</p>
+          <p style={{ color: '#666', margin: 0 }}>Não se preocupe! O link pode estar incorreto, por isso entre em contato com nosso canal de atendimento e solicite ajuda.</p>
         </div>
       </div>
     )
