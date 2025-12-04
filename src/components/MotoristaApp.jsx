@@ -1623,6 +1623,25 @@ function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atuali
         </div>
       )}
 
+      {/* Valor do motorista */}
+      {viagem.valor_motorista && (
+        <div style={{ 
+          fontSize: '14px', 
+          marginBottom: '12px', 
+          padding: '10px 12px', 
+          background: '#e8f5e9', 
+          borderRadius: '6px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}>
+          <span style={{ color: '#2e7d32', fontWeight: 500 }}>💰 Valor desta corrida:</span>
+          <span style={{ fontWeight: 700, fontSize: '16px', color: '#27ae60' }}>
+            R$ {viagem.valor_motorista.toFixed(2)}
+          </span>
+        </div>
+      )}
+
       {/* No-Show info */}
       {viagem.status === 'no_show' && viagem.no_show_timestamp && (
         <div style={{ 

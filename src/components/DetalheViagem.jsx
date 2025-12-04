@@ -14,6 +14,7 @@ function DetalheViagem() {
   const [showOcorrencia, setShowOcorrencia] = useState(false)
   const [novaOcorrencia, setNovaOcorrencia] = useState({ tipo: 'outro', descricao: '' })
   const [excluindo, setExcluindo] = useState(false)
+  const [vinculacao, setVinculacao] = useState({ motorista_id: '', valor_motorista: '' })
 
   useEffect(() => {
     fetchViagem()
@@ -72,24 +73,39 @@ function DetalheViagem() {
     }
   }
 
-  async function vincularMotorista(motoristaId) {
+  async function vincularMotorista(e) {
+    e.preventDefault()
+    
+    if (!vinculacao.motorista_id) {
+      alert('Selecione um motorista')
+      return
+    }
+
+    const updateData = { 
+      motorista_id: vinculacao.motorista_id,
+      status: 'vinculada'
+    }
+
+    // Adiciona valor_motorista se foi informado
+    if (vinculacao.valor_motorista) {
+      updateData.valor_motorista = parseFloat(vinculacao.valor_motorista)
+    }
+
     const { error } = await supabase
       .from('viagens')
-      .update({ 
-        motorista_id: motoristaId,
-        status: 'vinculada'
-      })
+      .update(updateData)
       .eq('id', id)
 
     if (error) {
       alert('Erro ao vincular motorista')
     } else {
-      const motorista = motoristas.find(m => m.id === motoristaId)
+      const motorista = motoristas.find(m => m.id === vinculacao.motorista_id)
       await supabase.from('ocorrencias').insert([{
         viagem_id: parseInt(id),
         tipo: 'alteracao_status',
         descricao: `Motorista vinculado: ${motorista?.nome}`
       }])
+      setVinculacao({ motorista_id: '', valor_motorista: '' })
       fetchViagem()
     }
   }
@@ -576,8 +592,14 @@ function DetalheViagem() {
               </div>
               {viagem.valor && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Valor</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Valor Fornecedor</div>
                   <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--verde-escuro)' }}>{formatarValor(viagem.valor, viagem.moeda)}</div>
+                </div>
+              )}
+              {viagem.valor_motorista && (
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Repasse Motorista</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#3498db' }}>R$ {viagem.valor_motorista.toFixed(2)}</div>
                 </div>
               )}
               {viagem.observacoes && (
@@ -612,8 +634,14 @@ function DetalheViagem() {
                     
                     mensagem += `%0A%0A🔗 *Acompanhe sua viagem:*%0A${link}`
                     
-                    const telefone = viagem.passageiro_telefone.replace(/\D/g, '')
-                    window.open(`https://wa.me/55${telefone}?text=${mensagem}`, '_blank')
+                    let telefone = viagem.passageiro_telefone.replace(/\D/g, '')
+                    // Se tiver 10 ou 11 dígitos, é número brasileiro sem código do país
+                    // Se tiver mais, já tem código do país (ex: +54 Argentina)
+                    if (telefone.length <= 11) {
+                      telefone = '55' + telefone
+                    }
+                    console.log('Telefone cliente formatado:', telefone)
+                    window.open(`https://wa.me/${telefone}?text=${mensagem}`, '_blank')
                   }}
                   style={{
                     display: 'flex',
@@ -682,8 +710,14 @@ function DetalheViagem() {
     <button
       onClick={() => {
        const mensagem = `🚗 *Nova viagem atribuída!*%0A%0A📅 *Data:* ${data} as ${hora}%0A📍 *Origem:* ${viagem.origem}%0A📍 *Destino:* ${viagem.destino}%0A👤 *Passageiro:* ${viagem.passageiro_nome}%0A👥 *Quantidade:* ${viagem.quantidade_passageiros} pessoa(s)%0A🧳 *Bagagens:* ${(viagem.bagagens_grandes || 0)} grande(s) + ${(viagem.bagagens_pequenas || 0)} pequena(s)%0A%0A🔗 Acesse o app: https://agua-verde-app.vercel.app/`
-        const telefone = viagem.motoristas.telefone.replace(/\D/g, '')
-        window.open(`https://wa.me/55${telefone}?text=${mensagem}`, '_blank')
+        let telefone = viagem.motoristas.telefone.replace(/\D/g, '')
+        // Se tiver 10 ou 11 dígitos, é número brasileiro sem código do país
+        // Se tiver 12 ou 13 dígitos e começar com 55, já tem código do país
+        if (telefone.length <= 11) {
+          telefone = '55' + telefone
+        }
+        console.log('Telefone formatado:', telefone)
+        window.open(`https://wa.me/${telefone}?text=${mensagem}`, '_blank')
       }}
       style={{
         display: 'flex',
@@ -708,19 +742,45 @@ function DetalheViagem() {
     </button>
   </div>
 ) : (
-              <div>
+              <form onSubmit={vincularMotorista}>
                 <p style={{ marginBottom: 12, color: 'var(--cinza-texto)' }}>Nenhum motorista vinculado</p>
-                <select 
-                  className="form-select" 
-                  onChange={(e) => e.target.value && vincularMotorista(e.target.value)}
-                  defaultValue=""
-                >
-                  <option value="">Selecionar motorista...</option>
-                  {motoristas.map(m => (
-                    <option key={m.id} value={m.id}>{m.nome}</option>
-                  ))}
-                </select>
-              </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--cinza-texto)', marginBottom: 4 }}>Motorista</label>
+                    <select 
+                      className="form-select" 
+                      value={vinculacao.motorista_id}
+                      onChange={(e) => setVinculacao({ ...vinculacao, motorista_id: e.target.value })}
+                    >
+                      <option value="">Selecionar motorista...</option>
+                      {motoristas.map(m => (
+                        <option key={m.id} value={m.id}>{m.nome}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--cinza-texto)', marginBottom: 4 }}>Valor a pagar ao motorista (R$)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="form-input"
+                      placeholder="Ex: 80.00"
+                      value={vinculacao.valor_motorista}
+                      onChange={(e) => setVinculacao({ ...vinculacao, valor_motorista: e.target.value })}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary"
+                    disabled={!vinculacao.motorista_id}
+                    style={{ opacity: vinculacao.motorista_id ? 1 : 0.6 }}
+                  >
+                    Vincular Motorista
+                  </button>
+                </div>
+              </form>
             )}
           </div>
 
