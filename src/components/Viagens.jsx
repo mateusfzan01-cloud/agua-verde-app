@@ -52,9 +52,9 @@ function Viagens() {
 
     if (filtros.busca) {
       const busca = filtros.busca.toLowerCase()
-      resultado = resultado.filter(v => 
-        v.passageiro_nome.toLowerCase().includes(busca) ||
-        v.passageiro_telefone.includes(busca)
+      resultado = resultado.filter(v =>
+        (v.passageiro_nome ?? '').toLowerCase().includes(busca) ||
+        (v.passageiro_telefone ?? '').includes(busca)
       )
     }
 
