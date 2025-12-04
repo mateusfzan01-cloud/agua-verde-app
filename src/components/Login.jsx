@@ -13,13 +13,13 @@ function Login() {
     setErro('')
     setCarregando(true)
 
-    const resultado = await login(email, senha)
-    
-    if (!resultado.sucesso) {
-      setErro(resultado.erro)
+    try {
+      await login(email, senha)
+    } catch (error) {
+      setErro(error.message || 'Email ou senha invalidos')
+    } finally {
+      setCarregando(false)
     }
-    
-    setCarregando(false)
   }
 
   return (
