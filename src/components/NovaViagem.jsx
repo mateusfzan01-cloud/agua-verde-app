@@ -5,6 +5,7 @@ import { supabase } from '../supabaseClient'
 function NovaViagem() {
   const navigate = useNavigate()
   const [motoristas, setMotoristas] = useState([])
+  const [fornecedores, setFornecedores] = useState([])
   const [salvando, setSalvando] = useState(false)
   const [form, setForm] = useState({
     passageiro_nome: '',
@@ -21,6 +22,7 @@ function NovaViagem() {
     voo_numero: '',
     voo_companhia: '',
     motorista_id: '',
+    fornecedor_id: '',
     valor: '',
     moeda: 'BRL',
     observacoes: ''
@@ -28,6 +30,7 @@ function NovaViagem() {
 
   useEffect(() => {
     fetchMotoristas()
+    fetchFornecedores()
   }, [])
 
   async function fetchMotoristas() {
@@ -36,6 +39,15 @@ function NovaViagem() {
       .select('*')
       .eq('ativo', true)
     setMotoristas(data || [])
+  }
+
+  async function fetchFornecedores() {
+    const { data } = await supabase
+      .from('fornecedores')
+      .select('*')
+      .eq('ativo', true)
+      .order('nome')
+    setFornecedores(data || [])
   }
 
   function handleChange(e) {
@@ -64,6 +76,7 @@ function NovaViagem() {
       voo_numero: form.voo_numero || null,
       voo_companhia: form.voo_companhia || null,
       motorista_id: form.motorista_id || null,
+      fornecedor_id: form.fornecedor_id || null,
       valor: form.valor ? parseFloat(form.valor) : null,
       moeda: form.moeda || 'BRL',
       observacoes: form.observacoes || null,
@@ -324,6 +337,21 @@ function NovaViagem() {
             <h2 className="section-title">Atribuicao</h2>
             <div className="form-row">
               <div className="form-group">
+                <label className="form-label">Fornecedor <span className="optional">(opcional)</span></label>
+                <select
+                  name="fornecedor_id"
+                  className="form-select"
+                  value={form.fornecedor_id}
+                  onChange={handleChange}
+                >
+                  <option value="">Nenhum (cliente direto)</option>
+                  {fornecedores.map(f => (
+                    <option key={f.id} value={f.id}>{f.nome}</option>
+                  ))}
+                </select>
+                <p className="form-hint">Selecione se a viagem veio de um fornecedor/agência.</p>
+              </div>
+              <div className="form-group">
                 <label className="form-label">Motorista <span className="optional">(opcional)</span></label>
                 <select
                   name="motorista_id"
@@ -338,6 +366,8 @@ function NovaViagem() {
                 </select>
                 <p className="form-hint">Voce pode vincular um motorista agora ou depois.</p>
               </div>
+            </div>
+            <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Valor <span className="optional">(opcional)</span></label>
                 <div style={{ display: 'flex', gap: 8 }}>

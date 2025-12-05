@@ -6,6 +6,7 @@ function EditarViagem() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [motoristas, setMotoristas] = useState([])
+  const [fornecedores, setFornecedores] = useState([])
   const [salvando, setSalvando] = useState(false)
   const [carregando, setCarregando] = useState(true)
   const [form, setForm] = useState({
@@ -23,6 +24,7 @@ function EditarViagem() {
     voo_numero: '',
     voo_companhia: '',
     motorista_id: '',
+    fornecedor_id: '',
     valor: '',
     moeda: 'BRL',
     observacoes: '',
@@ -32,6 +34,7 @@ function EditarViagem() {
   useEffect(() => {
     fetchViagem()
     fetchMotoristas()
+    fetchFornecedores()
   }, [id])
 
   async function fetchViagem() {
@@ -68,6 +71,7 @@ function EditarViagem() {
       voo_numero: data.voo_numero || '',
       voo_companhia: data.voo_companhia || '',
       motorista_id: data.motorista_id || '',
+      fornecedor_id: data.fornecedor_id || '',
       valor: data.valor || '',
       moeda: data.moeda || 'BRL',
       observacoes: data.observacoes || '',
@@ -82,6 +86,15 @@ function EditarViagem() {
       .select('*')
       .eq('ativo', true)
     setMotoristas(data || [])
+  }
+
+  async function fetchFornecedores() {
+    const { data } = await supabase
+      .from('fornecedores')
+      .select('*')
+      .eq('ativo', true)
+      .order('nome')
+    setFornecedores(data || [])
   }
 
   function handleChange(e) {
@@ -110,6 +123,7 @@ function EditarViagem() {
       voo_numero: form.voo_numero || null,
       voo_companhia: form.voo_companhia || null,
       motorista_id: form.motorista_id || null,
+      fornecedor_id: form.fornecedor_id || null,
       valor: form.valor ? parseFloat(form.valor) : null,
       moeda: form.moeda || 'BRL',
       observacoes: form.observacoes || null
@@ -380,6 +394,21 @@ function EditarViagem() {
             <h2 className="section-title">Atribuicao</h2>
             <div className="form-row">
               <div className="form-group">
+                <label className="form-label">Fornecedor <span className="optional">(opcional)</span></label>
+                <select
+                  name="fornecedor_id"
+                  className="form-select"
+                  value={form.fornecedor_id}
+                  onChange={handleChange}
+                >
+                  <option value="">Nenhum (cliente direto)</option>
+                  {fornecedores.map(f => (
+                    <option key={f.id} value={f.id}>{f.nome}</option>
+                  ))}
+                </select>
+                <p className="form-hint">Selecione se a viagem veio de um fornecedor/agência.</p>
+              </div>
+              <div className="form-group">
                 <label className="form-label">Motorista <span className="optional">(opcional)</span></label>
                 <select
                   name="motorista_id"
@@ -393,6 +422,8 @@ function EditarViagem() {
                   ))}
                 </select>
               </div>
+            </div>
+            <div className="form-row">
               <div className="form-group">
                 <label className="form-label">Valor <span className="optional">(opcional)</span></label>
                 <div style={{ display: 'flex', gap: 8 }}>

@@ -29,7 +29,7 @@ function DetalheViagem() {
     
     const { data: viagemData, error: viagemError } = await supabase
       .from('viagens')
-      .select('*, motoristas(id, nome, telefone)')
+      .select('*, motoristas(id, nome, telefone), fornecedores(id, nome)')
       .eq('id', id)
       .single()
 
@@ -550,6 +550,27 @@ function DetalheViagem() {
               <div>
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Passageiros</div>
                 <div style={{ fontSize: 15 }}>{viagem.quantidade_passageiros} pessoa(s)</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--cinza-texto)', textTransform: 'uppercase', marginBottom: 4 }}>Fornecedor</div>
+                <div style={{ fontSize: 15 }}>
+                  {viagem.fornecedores ? (
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '4px 10px',
+                      background: '#e3f2fd',
+                      color: '#1565c0',
+                      borderRadius: 6,
+                      fontWeight: 500
+                    }}>
+                      {viagem.fornecedores.nome}
+                    </span>
+                  ) : (
+                    <span style={{ color: 'var(--cinza-texto)' }}>Cliente direto</span>
+                  )}
+                </div>
               </div>
               {viagem.valor && (
                 <div>
