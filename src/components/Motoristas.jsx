@@ -15,7 +15,9 @@ function Motoristas() {
     email: '',
     marca_modelo: '',
     cor: '',
-    placa: ''
+    placa: '',
+    pagamento_no_dia: false,
+    chave_pix: ''
   })
 
   // Estado para modal de convite
@@ -51,7 +53,9 @@ function Motoristas() {
         email: motorista.email || '',
         marca_modelo: motorista.marca_modelo || '',
         cor: motorista.cor || '',
-        placa: motorista.placa || ''
+        placa: motorista.placa || '',
+        pagamento_no_dia: motorista.pagamento_no_dia || false,
+        chave_pix: motorista.chave_pix || ''
       })
     } else {
       setMotoristaSelecionado(null)
@@ -61,7 +65,9 @@ function Motoristas() {
         email: '',
         marca_modelo: '',
         cor: '',
-        placa: ''
+        placa: '',
+        pagamento_no_dia: false,
+        chave_pix: ''
       })
     }
     setModalAberto(true)
@@ -73,7 +79,8 @@ function Motoristas() {
   }
 
   function handleChange(e) {
-    setForm({ ...form, [e.target.name]: e.target.value })
+    const { name, value, type, checked } = e.target
+    setForm({ ...form, [name]: type === 'checkbox' ? checked : value })
   }
 
   async function salvarMotorista(e) {
@@ -291,16 +298,16 @@ function Motoristas() {
 
               {/* Veículo */}
               {(motorista.marca_modelo || motorista.placa) && (
-                <div style={{ 
-                  marginTop: 12, 
-                  padding: 12, 
-                  background: '#f8f9fa', 
-                  borderRadius: 8 
+                <div style={{
+                  marginTop: 12,
+                  padding: 12,
+                  background: '#f8f9fa',
+                  borderRadius: 8
                 }}>
-                  <div style={{ 
-                    fontSize: 11, 
-                    color: 'var(--cinza-texto)', 
-                    textTransform: 'uppercase', 
+                  <div style={{
+                    fontSize: 11,
+                    color: 'var(--cinza-texto)',
+                    textTransform: 'uppercase',
                     marginBottom: 6,
                     fontWeight: 600
                   }}>
@@ -313,7 +320,7 @@ function Motoristas() {
                     </div>
                   )}
                   {motorista.placa && (
-                    <div style={{ 
+                    <div style={{
                       display: 'inline-block',
                       marginTop: 6,
                       padding: '4px 10px',
@@ -325,6 +332,46 @@ function Motoristas() {
                       fontSize: 13
                     }}>
                       {motorista.placa}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Pagamento */}
+              {(motorista.chave_pix || motorista.pagamento_no_dia) && (
+                <div style={{
+                  marginTop: 12,
+                  padding: 12,
+                  background: '#e3f2fd',
+                  borderRadius: 8
+                }}>
+                  <div style={{
+                    fontSize: 11,
+                    color: '#1565c0',
+                    textTransform: 'uppercase',
+                    marginBottom: 6,
+                    fontWeight: 600
+                  }}>
+                    💰 Pagamento
+                  </div>
+                  {motorista.chave_pix && (
+                    <div style={{ fontSize: 13, color: '#333', marginBottom: motorista.pagamento_no_dia ? 8 : 0 }}>
+                      <strong>Pix:</strong> {motorista.chave_pix}
+                    </div>
+                  )}
+                  {motorista.pagamento_no_dia && (
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '4px 8px',
+                      background: '#bbdefb',
+                      borderRadius: 4,
+                      fontSize: 12,
+                      fontWeight: 500,
+                      color: '#1565c0'
+                    }}>
+                      ⚡ Pagamento no dia
                     </div>
                   )}
                 </div>
@@ -593,6 +640,67 @@ function Motoristas() {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Seção de Pagamento */}
+              <div style={{
+                padding: 16,
+                background: '#e3f2fd',
+                borderRadius: 8,
+                marginBottom: 20
+              }}>
+                <div style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  marginBottom: 16,
+                  color: '#1565c0'
+                }}>
+                  💰 Dados de Pagamento
+                </div>
+
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: 14 }}>
+                    Chave Pix
+                  </label>
+                  <input
+                    type="text"
+                    name="chave_pix"
+                    value={form.chave_pix}
+                    onChange={handleChange}
+                    placeholder="Email, CPF, telefone ou chave aleatória"
+                    style={{
+                      width: '100%',
+                      padding: 12,
+                      border: '2px solid #e0e0e0',
+                      borderRadius: 8,
+                      fontSize: 16,
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  cursor: 'pointer',
+                  padding: 12,
+                  background: 'white',
+                  borderRadius: 8,
+                  border: form.pagamento_no_dia ? '2px solid #1565c0' : '2px solid #e0e0e0'
+                }}>
+                  <input
+                    type="checkbox"
+                    name="pagamento_no_dia"
+                    checked={form.pagamento_no_dia}
+                    onChange={handleChange}
+                    style={{ width: 20, height: 20 }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 500, fontSize: 14 }}>Pagamento no dia</div>
+                    <div style={{ fontSize: 12, color: '#666' }}>Recebe no mesmo dia da viagem (não espera segunda)</div>
+                  </div>
+                </label>
               </div>
 
               <div style={{ display: 'flex', gap: 12 }}>
