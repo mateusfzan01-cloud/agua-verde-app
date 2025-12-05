@@ -13,6 +13,8 @@ function Viagens() {
     status: '',
     motorista: ''
   })
+  const [paginaAtual, setPaginaAtual] = useState(1)
+  const [itensPorPagina, setItensPorPagina] = useState(50)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -82,9 +84,24 @@ function Viagens() {
 
   function limparFiltros() {
     setFiltros({ busca: '', data: '', status: '', motorista: '' })
+    setPaginaAtual(1)
+  }
+
+  function handleFiltroChange(novosFiltros) {
+    setFiltros(novosFiltros)
+    setPaginaAtual(1)
+  }
+
+  function handleItensPorPaginaChange(valor) {
+    setItensPorPagina(valor)
+    setPaginaAtual(1)
   }
 
   const viagensFiltradas = aplicarFiltros()
+  const totalPaginas = Math.ceil(viagensFiltradas.length / itensPorPagina)
+  const indiceInicial = (paginaAtual - 1) * itensPorPagina
+  const indiceFinal = indiceInicial + itensPorPagina
+  const viagensPaginadas = viagensFiltradas.slice(indiceInicial, indiceFinal)
 
   return (
     <>
@@ -109,7 +126,7 @@ function Viagens() {
               className="filter-input"
               placeholder="Nome do passageiro, telefone..."
               value={filtros.busca}
-              onChange={(e) => setFiltros({ ...filtros, busca: e.target.value })}
+              onChange={(e) => handleFiltroChange({ ...filtros, busca: e.target.value })}
             />
           </div>
           <div className="filter-group">
@@ -118,7 +135,7 @@ function Viagens() {
               type="date"
               className="filter-input"
               value={filtros.data}
-              onChange={(e) => setFiltros({ ...filtros, data: e.target.value })}
+              onChange={(e) => handleFiltroChange({ ...filtros, data: e.target.value })}
             />
           </div>
           <div className="filter-group">
@@ -126,7 +143,7 @@ function Viagens() {
             <select
               className="filter-select"
               value={filtros.status}
-              onChange={(e) => setFiltros({ ...filtros, status: e.target.value })}
+              onChange={(e) => handleFiltroChange({ ...filtros, status: e.target.value })}
             >
               <option value="">Todos</option>
               <option value="pendente">Pendente</option>
@@ -142,7 +159,7 @@ function Viagens() {
             <select
               className="filter-select"
               value={filtros.motorista}
-              onChange={(e) => setFiltros({ ...filtros, motorista: e.target.value })}
+              onChange={(e) => handleFiltroChange({ ...filtros, motorista: e.target.value })}
             >
               <option value="">Todos</option>
               <option value="sem">Sem motorista</option>
@@ -157,16 +174,34 @@ function Viagens() {
         </div>
       </div>
 
-      {/* Results */}
-      <p style={{ marginBottom: 16, color: 'var(--cinza-texto)', fontSize: 14 }}>
-        Exibindo <strong style={{ color: 'var(--preto)' }}>{viagensFiltradas.length}</strong> viagens
-      </p>
+      {/* Results and Pagination Controls */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <p style={{ color: 'var(--cinza-texto)', fontSize: 14, margin: 0 }}>
+          {viagensFiltradas.length === 0 ? (
+            <>Nenhuma viagem encontrada</>
+          ) : (
+            <>Exibindo <strong style={{ color: 'var(--preto)' }}>{indiceInicial + 1}-{Math.min(indiceFinal, viagensFiltradas.length)}</strong> de <strong style={{ color: 'var(--preto)' }}>{viagensFiltradas.length}</strong> viagens</>
+          )}
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <label style={{ fontSize: 14, color: 'var(--cinza-texto)' }}>Itens por página:</label>
+          <select
+            className="filter-select"
+            value={itensPorPagina}
+            onChange={(e) => handleItensPorPaginaChange(Number(e.target.value))}
+            style={{ minWidth: 70 }}
+          >
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+          </select>
+        </div>
+      </div>
 
       {/* Table */}
       <div className="card">
         {loading ? (
           <div className="loading">Carregando...</div>
-        ) : viagensFiltradas.length === 0 ? (
+        ) : viagensPaginadas.length === 0 ? (
           <div className="card-body" style={{ textAlign: 'center', padding: 40, color: 'var(--cinza-texto)' }}>
             Nenhuma viagem encontrada
           </div>
@@ -183,7 +218,7 @@ function Viagens() {
               </tr>
             </thead>
             <tbody>
-              {viagensFiltradas.map((viagem) => {
+              {viagensPaginadas.map((viagem) => {
                 const { data, hora } = formatarDataHora(viagem.data_hora)
                 return (
                   <tr key={viagem.id} onClick={() => navigate(`/viagens/${viagem.id}`)}>
@@ -228,6 +263,31 @@ function Viagens() {
           </table>
         )}
       </div>
+
+      {/* Pagination Navigation */}
+      {totalPaginas > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 20 }}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setPaginaAtual(p => Math.max(1, p - 1))}
+            disabled={paginaAtual === 1}
+            style={{ minWidth: 100 }}
+          >
+            ← Anterior
+          </button>
+          <span style={{ fontSize: 14, color: 'var(--cinza-texto)' }}>
+            Página <strong style={{ color: 'var(--preto)' }}>{paginaAtual}</strong> de <strong style={{ color: 'var(--preto)' }}>{totalPaginas}</strong>
+          </span>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setPaginaAtual(p => Math.min(totalPaginas, p + 1))}
+            disabled={paginaAtual === totalPaginas}
+            style={{ minWidth: 100 }}
+          >
+            Próxima →
+          </button>
+        </div>
+      )}
     </>
   )
 }
