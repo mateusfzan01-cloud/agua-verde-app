@@ -2,18 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { formatarMoeda } from '../utils/formatters'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-
-// Dados da empresa Água Verde
-const EMPRESA = {
-  nome: 'Água Verde – Viagens & Receptivos',
-  endereco: 'Rua Jonatas de Vasconcelos, 788',
-  cidade: 'Boa Viagem - Pernambuco - Brasil',
-  telefone: '(81) 3033-0245',
-  cnpj: '17.427.292/0001-46',
-  inscricaoEstadual: 'Isento'
-}
+import { visualizarPDFFatura, baixarPDFFatura } from '../utils/gerarPDFFatura'
 
 function Faturas() {
   const { perfil } = useAuth()
@@ -141,150 +130,24 @@ function Faturas() {
     }, 0)
   }
 
-  // Gerar PDF
-  function gerarPDF(fatura = null, viagens = null) {
-    const fornecedor = fornecedores.find(f => f.id === (fatura?.fornecedor_id || fornecedorSelecionado))
-    if (!fornecedor) return
-
-    const viagensParaPDF = viagens || getViagensSelecionadas()
-    const valorTotal = fatura?.valor_total || calcularTotal()
-    const moeda = fornecedor.moeda_padrao || 'BRL'
-
-    const doc = new jsPDF()
-    const pageWidth = doc.internal.pageSize.getWidth()
-
-    // Header
-    doc.setFontSize(16)
-    doc.setFont('helvetica', 'bold')
-    doc.text(EMPRESA.nome, 14, 20)
-
-    doc.setFontSize(10)
-    doc.setFont('helvetica', 'normal')
-    doc.text(EMPRESA.endereco, 14, 27)
-    doc.text(EMPRESA.cidade, 14, 32)
-    doc.text(EMPRESA.telefone, 14, 37)
-    doc.text(`CNPJ: ${EMPRESA.cnpj}`, 14, 42)
-    doc.text(`Inscrição Estadual: ${EMPRESA.inscricaoEstadual}`, 14, 47)
-
-    // Dados da fatura (lado direito)
-    const dataAtual = new Date().toLocaleDateString('pt-BR')
-    const vencimento = fatura?.data_vencimento
-      ? new Date(fatura.data_vencimento).toLocaleDateString('pt-BR')
-      : (dataVencimento ? new Date(dataVencimento + 'T12:00:00').toLocaleDateString('pt-BR') : '-')
-
-    doc.setFont('helvetica', 'bold')
-    doc.text(`Data: ${dataAtual}`, pageWidth - 60, 20)
-    doc.text(`FATURA`, pageWidth - 60, 27)
-    if (numeroReferencia || fatura?.observacoes) {
-      doc.text(`REF: ${fatura?.observacoes || numeroReferencia}`, pageWidth - 60, 34)
-    }
-    doc.text(`Vencimento: ${vencimento}`, pageWidth - 60, 41)
-
-    // Dados do fornecedor
-    doc.setFontSize(10)
-    doc.setFont('helvetica', 'bold')
-    doc.text('FATURAR PARA:', pageWidth - 60, 55)
-    doc.setFont('helvetica', 'normal')
-    doc.text(fornecedor.nome_legal || fornecedor.nome, pageWidth - 60, 62)
-    if (fornecedor.identificador_fiscal) {
-      doc.text(fornecedor.identificador_fiscal, pageWidth - 60, 69)
-    }
-    if (fornecedor.endereco) {
-      const enderecoLines = doc.splitTextToSize(fornecedor.endereco, 55)
-      doc.text(enderecoLines, pageWidth - 60, 76)
-    }
-
-    // Tabela de viagens
-    let tableColumns, tableData
-
-    if (fornecedor.nome.toLowerCase().includes('ineed')) {
-      // Layout iNeedTours
-      tableColumns = ['#', 'Nº Reserva', 'Passageiro', 'Data', 'Pax', 'Origem', 'Destino', 'Status', 'Valor']
-      tableData = viagensParaPDF.map((v, idx) => {
-        const isCancelada = v.status === 'cancelada'
-        return [
-          idx + 1,
-          v.numero_reserva || '-',
-          v.passageiro_nome || '-',
-          new Date(v.data_hora).toLocaleDateString('pt-BR'),
-          v.quantidade_passageiros || 1,
-          v.origem || '-',
-          v.destino || '-',
-          isCancelada ? '✗' : '✓',
-          isCancelada ? 'R$ 0,00' : formatarMoeda(v.valor)
-        ]
-      })
-    } else {
-      // Layout FoxTransfer
-      tableColumns = ['Nº Reserva', 'Nome', 'Pax', 'Origem', 'Destino', 'Hora', 'Status', 'Valor']
-      tableData = viagensParaPDF.map(v => {
-        const isCancelada = v.status === 'cancelada'
-        return [
-          v.numero_reserva || '-',
-          v.passageiro_nome || '-',
-          v.quantidade_passageiros || 1,
-          v.origem || '-',
-          v.destino || '-',
-          new Date(v.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-          isCancelada ? 'Cancelado' : 'Confirmado',
-          isCancelada ? 'R$ 0,00' : formatarMoeda(v.valor)
-        ]
-      })
-    }
-
-    autoTable(doc, {
-      startY: 95,
-      head: [tableColumns],
-      body: tableData,
-      theme: 'striped',
-      headStyles: {
-        fillColor: [39, 174, 96],
-        textColor: 255,
-        fontStyle: 'bold'
-      },
-      styles: {
-        fontSize: 8,
-        cellPadding: 3
-      },
-      columnStyles: {
-        0: { cellWidth: 'auto' },
-        7: { halign: 'center' },
-        8: { halign: 'right' }
-      },
-      didParseCell: function(data) {
-        // Colorir status
-        if (data.column.index === (fornecedor.nome.toLowerCase().includes('ineed') ? 7 : 6)) {
-          if (data.cell.raw === '✗' || data.cell.raw === 'Cancelado') {
-            data.cell.styles.textColor = [192, 57, 43]
-          } else if (data.cell.raw === '✓' || data.cell.raw === 'Confirmado') {
-            data.cell.styles.textColor = [39, 174, 96]
-          }
-        }
-      }
-    })
-
-    // Footer com total
-    const finalY = doc.lastAutoTable.finalY + 10
-    doc.setFontSize(12)
-    doc.setFont('helvetica', 'bold')
-
-    const simbolos = { 'BRL': 'R$', 'USD': 'US$', 'EUR': '€' }
-    const simbolo = simbolos[moeda] || moeda
-    doc.text(`TOTAL: ${simbolo} ${valorTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, pageWidth - 60, finalY)
-
-    // Quantidade de viagens
-    doc.setFontSize(10)
-    doc.setFont('helvetica', 'normal')
-    doc.text(`${viagensParaPDF.length} viagem(s)`, pageWidth - 60, finalY + 7)
-
-    return doc
-  }
-
+  // Visualizar PDF (preview antes de criar fatura)
   function visualizarPDF() {
-    const doc = gerarPDF()
-    if (doc) {
-      doc.output('dataurlnewwindow')
+    const fornecedor = fornecedores.find(f => f.id === fornecedorSelecionado)
+    if (!fornecedor) {
+      alert('Selecione um fornecedor')
+      return
     }
+    const viagensSel = getViagensSelecionadas()
+    if (viagensSel.length === 0) {
+      alert('Selecione pelo menos uma viagem')
+      return
+    }
+    const faturaPreview = {
+      id: 'PREVIEW',
+      numero: numeroReferencia || 'PREVIEW',
+      data_vencimento: dataVencimento || null
+    }
+    visualizarPDFFatura(faturaPreview, fornecedor, viagensSel)
   }
 
   async function criarFatura() {
@@ -346,10 +209,7 @@ function Faturas() {
       if (updateError) throw updateError
 
       // 4. Gerar e baixar PDF
-      const doc = gerarPDF(faturaData, viagensSel)
-      if (doc) {
-        doc.save(`fatura-${faturaData.id.substring(0, 8)}.pdf`)
-      }
+      baixarPDFFatura(faturaData, fornecedor, viagensSel)
 
       alert('Fatura gerada com sucesso!')
 
@@ -386,10 +246,10 @@ function Faturas() {
   }
 
   async function verPDFFatura(faturaId) {
-    // Buscar dados da fatura e viagens
+    // Buscar dados da fatura com fornecedor e viagens
     const { data: fatura } = await supabase
       .from('faturas')
-      .select('*')
+      .select('*, fornecedor:fornecedores(*)')
       .eq('id', faturaId)
       .single()
 
@@ -405,11 +265,10 @@ function Faturas() {
       .select('*')
       .in('id', viagemIds)
 
-    if (fatura && viagens) {
-      const doc = gerarPDF(fatura, viagens)
-      if (doc) {
-        doc.output('dataurlnewwindow')
-      }
+    if (fatura && fatura.fornecedor && viagens) {
+      visualizarPDFFatura(fatura, fatura.fornecedor, viagens)
+    } else {
+      alert('Erro ao carregar dados da fatura')
     }
   }
 
