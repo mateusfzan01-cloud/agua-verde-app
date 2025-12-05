@@ -31,33 +31,56 @@ export function gerarPDFFatura(fatura, fornecedor, viagens) {
 
   // HEADER - Dados do Fornecedor (direita)
   const rightCol = pageWidth - margin
-  doc.setFontSize(9)
-  doc.setFont('helvetica', 'bold')
-  const nomeFornecedor = fornecedor.nome_legal || fornecedor.nome
-  doc.text(nomeFornecedor, rightCol, 15, { align: 'right' })
+  let fornecedorY = 12
+  const lineHeight = 4
 
-  doc.setFont('helvetica', 'normal')
+  // Responsáveis (de dados_extras)
+  if (fornecedor.dados_extras?.responsaveis) {
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'bold')
+    doc.text(fornecedor.dados_extras.responsaveis, rightCol, fornecedorY, { align: 'right' })
+    fornecedorY += lineHeight
+  }
+
+  // Nome legal ou nome
   doc.setFontSize(8)
+  doc.setFont('helvetica', 'normal')
+  const nomeFornecedor = fornecedor.nome_legal || fornecedor.nome
+  doc.text(nomeFornecedor, rightCol, fornecedorY, { align: 'right' })
+  fornecedorY += lineHeight
+
+  // CNPJ/Identificador fiscal
   if (fornecedor.identificador_fiscal) {
-    doc.text(fornecedor.identificador_fiscal, rightCol, 20, { align: 'right' })
-  }
-  if (fornecedor.endereco) {
-    doc.text(fornecedor.endereco, rightCol, 25, { align: 'right' })
+    doc.text(fornecedor.identificador_fiscal, rightCol, fornecedorY, { align: 'right' })
+    fornecedorY += lineHeight
   }
 
-  // INFO DA FATURA
+  // Endereço
+  if (fornecedor.endereco) {
+    doc.text(fornecedor.endereco, rightCol, fornecedorY, { align: 'right' })
+    fornecedorY += lineHeight
+  }
+
+  // Telefone (de dados_extras)
+  if (fornecedor.dados_extras?.telefone) {
+    doc.text(fornecedor.dados_extras.telefone, rightCol, fornecedorY, { align: 'right' })
+    fornecedorY += lineHeight
+  }
+
+  // INFO DA FATURA (abaixo dos dados do fornecedor)
+  const infoY = Math.max(fornecedorY + 4, 38)
   doc.setFontSize(10)
   doc.setFont('helvetica', 'bold')
-  const infoX = pageWidth - 80
-  doc.text(`Data: ${formatarData(new Date())}`, infoX, 35)
-  doc.text(`FATURA N ${fatura.numero || fatura.id}`, infoX, 41)
+  doc.text(`Data: ${formatarData(new Date())}`, rightCol, infoY, { align: 'right' })
+  doc.text(`FATURA N ${fatura.numero || fatura.id}`, rightCol, infoY + 5, { align: 'right' })
   if (fatura.data_vencimento) {
-    doc.text(`VENCIMENTO: ${formatarData(fatura.data_vencimento)}`, infoX, 47)
+    doc.text(`VENCIMENTO: ${formatarData(fatura.data_vencimento)}`, rightCol, infoY + 10, { align: 'right' })
   }
 
   // LINHA SEPARADORA
+  const separatorY = Math.max(infoY + 16, 52)
   doc.setDrawColor(200, 200, 200)
-  doc.line(margin, 52, pageWidth - margin, 52)
+  doc.line(margin, separatorY, pageWidth - margin, separatorY)
 
   // COLUNAS E DADOS DA TABELA
   const colunas = getColunasPorFornecedor(fornecedor.nome)
@@ -97,7 +120,7 @@ export function gerarPDFFatura(fatura, fornecedor, viagens) {
 
   // GERAR TABELA
   autoTable(doc, {
-    startY: 56,
+    startY: separatorY + 4,
     head: [colunas],
     body: dadosTabela,
     theme: 'grid',
