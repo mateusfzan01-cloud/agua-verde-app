@@ -41,7 +41,7 @@ function AlertasPanel() {
             <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
           </svg>
         ),
-        titulo: 'Modificação'
+        titulo: 'Modificacao'
       },
       nova_reserva: {
         classe: 'info',
@@ -51,6 +51,15 @@ function AlertasPanel() {
           </svg>
         ),
         titulo: 'Nova Reserva'
+      },
+      avaliacao_baixa: {
+        classe: 'warning',
+        icone: (
+          <svg className="alert-icon" viewBox="0 0 24 24" fill="#f39c12" stroke="none">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        ),
+        titulo: 'Avaliacao Baixa'
       }
     }
     return configs[tipo] || configs.modificacao

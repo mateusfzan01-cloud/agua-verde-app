@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { getIniciais } from '../utils/formatters'
+import StarRating from './StarRating'
 
 function Motoristas() {
   const { user } = useAuth()
@@ -27,6 +28,9 @@ function Motoristas() {
   const [gerandoConvite, setGerandoConvite] = useState(false)
   const [copiado, setCopiado] = useState(false)
 
+  // Estado para avaliacoes
+  const [avaliacoes, setAvaliacoes] = useState({})
+
   useEffect(() => {
     fetchMotoristas()
   }, [])
@@ -37,11 +41,33 @@ function Motoristas() {
       .from('motoristas')
       .select('*')
       .order('nome')
-    
+
     if (!error) {
       setMotoristas(data || [])
+      // Buscar avaliacoes de cada motorista
+      fetchAvaliacoes(data || [])
     }
     setLoading(false)
+  }
+
+  async function fetchAvaliacoes(listaMotoristas) {
+    const avaliacoesMap = {}
+
+    for (const motorista of listaMotoristas) {
+      try {
+        const { data, error } = await supabase
+          .rpc('get_motorista_avaliacao', { p_motorista_id: motorista.id })
+
+        if (!error && data && data.length > 0) {
+          avaliacoesMap[motorista.id] = data[0]
+        }
+      } catch (err) {
+        // Funcao pode nao existir ainda, ignorar erro
+        console.log('Funcao get_motorista_avaliacao nao disponivel')
+      }
+    }
+
+    setAvaliacoes(avaliacoesMap)
   }
 
   function abrirModal(motorista = null) {
@@ -264,13 +290,30 @@ function Motoristas() {
               )}
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 600, fontSize: 16 }}>{motorista.nome}</div>
-                <div style={{ 
-                  fontSize: 11, 
-                  opacity: 0.9,
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.5
-                }}>
-                  {motorista.ativo ? 'Ativo' : 'Inativo'}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                  <div style={{
+                    fontSize: 11,
+                    opacity: 0.9,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5
+                  }}>
+                    {motorista.ativo ? 'Ativo' : 'Inativo'}
+                  </div>
+                  {avaliacoes[motorista.id]?.media_nota && (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      background: 'rgba(255,255,255,0.2)',
+                      padding: '2px 8px',
+                      borderRadius: 12,
+                      fontSize: 12
+                    }}>
+                      <StarRating rating={1} size="sm" />
+                      <span>{Number(avaliacoes[motorista.id].media_nota).toFixed(1)}</span>
+                      <span style={{ opacity: 0.8 }}>({avaliacoes[motorista.id].total_avaliacoes})</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -372,6 +415,63 @@ function Motoristas() {
                       color: '#1565c0'
                     }}>
                       ⚡ Pagamento no dia
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Avaliação */}
+              {avaliacoes[motorista.id]?.media_nota && (
+                <div style={{
+                  marginTop: 12,
+                  padding: 12,
+                  background: '#fff8e1',
+                  borderRadius: 8
+                }}>
+                  <div style={{
+                    fontSize: 11,
+                    color: '#f57c00',
+                    textTransform: 'uppercase',
+                    marginBottom: 8,
+                    fontWeight: 600
+                  }}>
+                    Avaliacao
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <StarRating
+                      rating={Number(avaliacoes[motorista.id].media_nota)}
+                      size="sm"
+                      showValue
+                      count={Number(avaliacoes[motorista.id].total_avaliacoes)}
+                    />
+                  </div>
+                  {avaliacoes[motorista.id].distribuicao && (
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {[5, 4, 3, 2, 1].map(nota => {
+                        const qtd = avaliacoes[motorista.id].distribuicao[nota] || 0
+                        const total = Number(avaliacoes[motorista.id].total_avaliacoes) || 1
+                        const pct = (qtd / total) * 100
+                        return (
+                          <div key={nota} style={{ flex: 1, textAlign: 'center' }}>
+                            <div style={{ fontSize: 10, color: '#666' }}>{nota}</div>
+                            <div style={{
+                              height: 4,
+                              background: '#e0e0e0',
+                              borderRadius: 2,
+                              overflow: 'hidden',
+                              marginTop: 2
+                            }}>
+                              <div style={{
+                                width: `${pct}%`,
+                                height: '100%',
+                                background: nota >= 4 ? '#4caf50' : nota === 3 ? '#ff9800' : '#f44336',
+                                borderRadius: 2
+                              }} />
+                            </div>
+                            <div style={{ fontSize: 9, color: '#999', marginTop: 2 }}>{qtd}</div>
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
                 </div>

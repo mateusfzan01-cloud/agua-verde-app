@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
 import { formatarData, formatarHora, formatarStatus, getIniciais, formatarValor } from '../utils/formatters'
+import StarRating from './StarRating'
 
 function Relatorios() {
   const navigate = useNavigate()
@@ -34,6 +35,15 @@ function Relatorios() {
   // Ranking de motoristas
   const [ranking, setRanking] = useState([])
 
+  // Dados de avaliacoes
+  const [avaliacoes, setAvaliacoes] = useState({
+    mediaGeral: 0,
+    totalAvaliacoes: 0,
+    taxaAvaliacao: 0,
+    distribuicao: { '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 }
+  })
+  const [avaliacoesPorMotorista, setAvaliacoesPorMotorista] = useState([])
+
   useEffect(() => {
     carregarDados()
   }, [dataInicio, dataFim])
@@ -54,6 +64,7 @@ function Relatorios() {
       setViagens(viagensData || [])
       calcularMetricas(viagensData || [])
       calcularRanking(viagensData || [])
+      calcularAvaliacoes(viagensData || [])
     }
 
     // Carregar lista de motoristas
@@ -148,6 +159,69 @@ function Relatorios() {
       .sort((a, b) => b.concluidas - a.concluidas)
 
     setRanking(rankingArray)
+  }
+
+  function calcularAvaliacoes(dados) {
+    // Filtrar viagens com avaliacao
+    const viagensAvaliadas = dados.filter(v => v.avaliacao_nota)
+    const viagensConcluidas = dados.filter(v => v.status === 'concluida')
+
+    // Calcular metricas gerais
+    const totalAvaliacoes = viagensAvaliadas.length
+    const taxaAvaliacao = viagensConcluidas.length > 0
+      ? (totalAvaliacoes / viagensConcluidas.length) * 100
+      : 0
+
+    const somaNotas = viagensAvaliadas.reduce((acc, v) => acc + v.avaliacao_nota, 0)
+    const mediaGeral = totalAvaliacoes > 0 ? somaNotas / totalAvaliacoes : 0
+
+    // Calcular distribuicao
+    const distribuicao = { '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 }
+    viagensAvaliadas.forEach(v => {
+      if (v.avaliacao_nota >= 1 && v.avaliacao_nota <= 5) {
+        distribuicao[v.avaliacao_nota.toString()]++
+      }
+    })
+
+    setAvaliacoes({
+      mediaGeral,
+      totalAvaliacoes,
+      taxaAvaliacao,
+      distribuicao
+    })
+
+    // Calcular avaliacoes por motorista
+    const porMotorista = {}
+    viagensAvaliadas.forEach(v => {
+      if (v.motorista_id && v.motoristas) {
+        if (!porMotorista[v.motorista_id]) {
+          porMotorista[v.motorista_id] = {
+            motorista: v.motoristas,
+            total: 0,
+            somaNotas: 0,
+            avaliacoes: []
+          }
+        }
+        porMotorista[v.motorista_id].total++
+        porMotorista[v.motorista_id].somaNotas += v.avaliacao_nota
+        porMotorista[v.motorista_id].avaliacoes.push({
+          nota: v.avaliacao_nota,
+          comentario: v.avaliacao_comentario,
+          data: v.avaliacao_data,
+          passageiro: v.passageiro_nome
+        })
+      }
+    })
+
+    // Converter para array e ordenar por media
+    const avaliacoesArray = Object.values(porMotorista)
+      .map(item => ({
+        ...item,
+        media: item.total > 0 ? item.somaNotas / item.total : 0
+      }))
+      .sort((a, b) => b.media - a.media)
+
+    setAvaliacoesPorMotorista(avaliacoesArray)
   }
 
   function aplicarPeriodoRapido(tipo) {
@@ -325,6 +399,185 @@ function Relatorios() {
                   R$ {((metricas.faturamentoPorMoeda['BRL'] || 0) - metricas.repasses).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
                 <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.9)', marginTop: 4 }}>Margem (BRL)</div>
+              </div>
+            )}
+          </div>
+
+          {/* Dashboard de Avaliacoes */}
+          <div style={{ marginBottom: 24 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: '#333' }}>
+              Avaliacoes de Motoristas
+            </h2>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: 16
+            }}>
+              {/* Card de Media Geral */}
+              <div className="card" style={{ padding: 24 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: '50%',
+                    background: avaliacoes.mediaGeral >= 4 ? '#e8f5e9' : avaliacoes.mediaGeral >= 3 ? '#fff8e1' : '#ffebee',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <span style={{
+                      fontSize: 28,
+                      fontWeight: 700,
+                      color: avaliacoes.mediaGeral >= 4 ? '#2e7d32' : avaliacoes.mediaGeral >= 3 ? '#f57c00' : '#c62828'
+                    }}>
+                      {avaliacoes.mediaGeral.toFixed(1)}
+                    </span>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, color: '#666', marginBottom: 4 }}>Media Geral</div>
+                    <StarRating rating={Math.round(avaliacoes.mediaGeral)} size="sm" />
+                    <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
+                      {avaliacoes.totalAvaliacoes} avaliacoes
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card de Taxa de Avaliacao */}
+              <div className="card" style={{ padding: 24 }}>
+                <div style={{ fontSize: 14, color: '#666', marginBottom: 8 }}>Taxa de Avaliacao</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontSize: 36, fontWeight: 700, color: '#3498db' }}>
+                    {avaliacoes.taxaAvaliacao.toFixed(0)}%
+                  </span>
+                  <span style={{ fontSize: 14, color: '#999' }}>das viagens concluidas</span>
+                </div>
+                <div style={{
+                  marginTop: 12,
+                  height: 8,
+                  background: '#e0e0e0',
+                  borderRadius: 4,
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    width: `${Math.min(avaliacoes.taxaAvaliacao, 100)}%`,
+                    height: '100%',
+                    background: '#3498db',
+                    borderRadius: 4
+                  }} />
+                </div>
+              </div>
+
+              {/* Card de Distribuicao */}
+              <div className="card" style={{ padding: 24 }}>
+                <div style={{ fontSize: 14, color: '#666', marginBottom: 12 }}>Distribuicao</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[5, 4, 3, 2, 1].map(nota => {
+                    const qtd = avaliacoes.distribuicao[nota.toString()] || 0
+                    const pct = avaliacoes.totalAvaliacoes > 0 ? (qtd / avaliacoes.totalAvaliacoes) * 100 : 0
+                    return (
+                      <div key={nota} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 20, fontSize: 12, fontWeight: 600, color: '#666' }}>{nota}</div>
+                        <StarRating rating={1} size="sm" />
+                        <div style={{ flex: 1, height: 8, background: '#e0e0e0', borderRadius: 4, overflow: 'hidden' }}>
+                          <div style={{
+                            width: `${pct}%`,
+                            height: '100%',
+                            background: nota >= 4 ? '#4caf50' : nota === 3 ? '#ff9800' : '#f44336',
+                            borderRadius: 4
+                          }} />
+                        </div>
+                        <div style={{ width: 30, fontSize: 12, color: '#666', textAlign: 'right' }}>{qtd}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Ranking de Avaliacoes por Motorista */}
+            {avaliacoesPorMotorista.length > 0 && (
+              <div className="card" style={{ marginTop: 16 }}>
+                <div className="card-header">
+                  <h3 className="card-title">Ranking por Avaliacao</h3>
+                </div>
+                <div className="card-body">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {avaliacoesPorMotorista.slice(0, 10).map((item, index) => (
+                      <div key={item.motorista.id} style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 12,
+                        padding: 12,
+                        background: index === 0 ? '#e8f5e9' : '#f8f9fa',
+                        borderRadius: 8
+                      }}>
+                        <div style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          background: index === 0 ? '#4caf50' : index === 1 ? '#8bc34a' : index === 2 ? '#cddc39' : '#e0e0e0',
+                          color: index < 3 ? 'white' : '#666',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 700,
+                          fontSize: 14
+                        }}>
+                          {index + 1}
+                        </div>
+
+                        {item.motorista.foto_url ? (
+                          <img
+                            src={item.motorista.foto_url}
+                            alt={item.motorista.nome}
+                            style={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: '50%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            background: 'var(--verde-escuro)',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 600
+                          }}>
+                            {getIniciais(item.motorista.nome)}
+                          </div>
+                        )}
+
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600, fontSize: 14 }}>{item.motorista.nome}</div>
+                          <div style={{ fontSize: 12, color: '#666' }}>
+                            {item.total} avaliacao{item.total !== 1 ? 'es' : ''}
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <StarRating rating={Math.round(item.media)} size="sm" />
+                            <span style={{
+                              fontSize: 16,
+                              fontWeight: 700,
+                              color: item.media >= 4 ? '#2e7d32' : item.media >= 3 ? '#f57c00' : '#c62828'
+                            }}>
+                              {item.media.toFixed(1)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
           </div>

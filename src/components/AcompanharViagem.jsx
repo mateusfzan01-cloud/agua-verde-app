@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { getIniciais } from '../utils/formatters'
 import { supabase } from '../supabaseClient'
+import AvaliacaoViagem from './AvaliacaoViagem'
+import StarRating from './StarRating'
 
 function AcompanharViagem() {
   const { token } = useParams()
@@ -494,10 +496,58 @@ function AcompanharViagem() {
           </div>
         </div>
 
+        {/* Seção de Avaliação - Apenas para viagens concluídas */}
+        {viagem.status === 'concluida' && viagem.motoristas && (
+          <div style={{ marginBottom: 16 }}>
+            {viagem.avaliacao_nota ? (
+              // Já foi avaliada - mostrar avaliação existente
+              <div style={{
+                background: 'white',
+                borderRadius: 16,
+                padding: 24,
+                boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+                textAlign: 'center'
+              }}>
+                <h2 style={{ margin: '0 0 16px', fontSize: 16, color: '#333' }}>
+                  Sua Avaliacao
+                </h2>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+                  <StarRating rating={viagem.avaliacao_nota} size="md" showValue />
+                </div>
+                {viagem.avaliacao_comentario && (
+                  <p style={{
+                    margin: 0,
+                    color: '#666',
+                    fontSize: 14,
+                    fontStyle: 'italic'
+                  }}>
+                    "{viagem.avaliacao_comentario}"
+                  </p>
+                )}
+                <p style={{
+                  margin: '12px 0 0',
+                  color: '#27ae60',
+                  fontSize: 13
+                }}>
+                  Obrigado pela sua avaliacao!
+                </p>
+              </div>
+            ) : (
+              // Ainda não avaliada - mostrar formulário
+              <AvaliacaoViagem
+                viagemId={viagem.id}
+                motoristaId={viagem.motoristas.id}
+                motoristaNome={viagem.motoristas.nome}
+                onAvaliacaoEnviada={() => carregarViagem()}
+              />
+            )}
+          </div>
+        )}
+
         {/* Atualização automática */}
-        <p style={{ 
-          textAlign: 'center', 
-          fontSize: 12, 
+        <p style={{
+          textAlign: 'center',
+          fontSize: 12,
           color: '#999',
           margin: '20px 0'
         }}>
