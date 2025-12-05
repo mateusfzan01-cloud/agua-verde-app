@@ -6,6 +6,127 @@
 
 ---
 
+## 0. Pré-requisitos (Implementar Primeiro!)
+
+### ✅ 0.1 Banco de Dados - CONCLUÍDO
+
+Campos já criados via MCP Supabase:
+
+| Tabela | Campo | Tipo | Default | Descrição |
+|--------|-------|------|---------|-----------|
+| viagens | valor_motorista | numeric | - | Valor a pagar ao motorista |
+| viagens | fornecedor_id | uuid | - | FK para fornecedores (pendente) |
+| viagens | status_pagamento_motorista | text | 'pendente' | pendente, pago, cancelado |
+| viagens | data_pagamento_motorista | timestamptz | - | Data do pagamento |
+| viagens | status_faturamento | text | 'pendente' | pendente, faturado (evita dupla-fatura) |
+| motoristas | pagamento_no_dia | boolean | false | Se recebe no mesmo dia |
+| motoristas | chave_pix | text | - | Chave PIX do motorista |
+
+> **Nota**: `fornecedor_id` foi criado sem FK porque tabela `fornecedores` ainda não existe. A constraint será adicionada na Fase 1.
+
+### ✅ 0.1.1 Função RPC - Pagamento Atômico - CONCLUÍDO
+
+Função `marcar_viagens_como_pagas` criada para garantir integridade transacional:
+
+```sql
+-- Uso no frontend:
+const { data, error } = await supabase.rpc('marcar_viagens_como_pagas', {
+  p_motorista_id: motoristaId,
+  p_viagem_ids: [1, 2, 3],
+  p_periodo_inicio: '2024-01-01',
+  p_periodo_fim: '2024-01-07'
+})
+// Retorna: { success: true, pagamento_id: uuid, valor_total: 500.00, quantidade_viagens: 3 }
+```
+
+> **Importante**: Esta função executa UPDATE viagens + INSERT pagamentos_motoristas + INSERT pagamento_viagens em uma única transação. Se qualquer operação falhar, todas são revertidas.
+
+### 🔧 0.2 Frontend - Ajustes nos Forms Existentes (PENDENTE)
+
+**DetalheViagem.jsx - Expandir vinculação de motorista:**
+
+O código atual de vinculação é apenas:
+```jsx
+<select onChange={(e) => vincularMotorista(e.target.value)}>
+```
+
+Precisa ser expandido para incluir campo de valor:
+```jsx
+// Estado
+const [valorMotorista, setValorMotorista] = useState('')
+const [motoristaParaVincular, setMotoristaParaVincular] = useState('')
+
+// Função de vinculação atualizada
+async function vincularMotorista() {
+  const { error } = await supabase
+    .from('viagens')
+    .update({ 
+      motorista_id: motoristaParaVincular,
+      valor_motorista: valorMotorista ? parseFloat(valorMotorista) : null,
+      status: 'vinculada'
+    })
+    .eq('id', id)
+  // ...
+}
+
+// UI com dois campos
+<div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
+  <select value={motoristaParaVincular} onChange={(e) => setMotoristaParaVincular(e.target.value)}>
+    <option value="">Selecionar motorista...</option>
+    {motoristas.map(m => <option key={m.id} value={m.id}>{m.nome}</option>)}
+  </select>
+  <input 
+    type="number" 
+    placeholder="Valor motorista (R$)" 
+    value={valorMotorista}
+    onChange={(e) => setValorMotorista(e.target.value)}
+  />
+  <button onClick={vincularMotorista} disabled={!motoristaParaVincular}>
+    Vincular
+  </button>
+</div>
+```
+
+**Motoristas.jsx - Adicionar campos no form:**
+```jsx
+// No estado do form, adicionar:
+pagamento_no_dia: false,
+chave_pix: ''
+
+// No formulário, adicionar campos:
+<div className="form-group">
+  <label>
+    <input
+      type="checkbox"
+      name="pagamento_no_dia"
+      checked={form.pagamento_no_dia}
+      onChange={handleChange}
+    />
+    Pagamento no dia (não espera segunda)
+  </label>
+</div>
+
+<div className="form-group">
+  <label>Chave Pix</label>
+  <input
+    type="text"
+    name="chave_pix"
+    value={form.chave_pix}
+    onChange={handleChange}
+    placeholder="Email, CPF, telefone ou chave aleatória"
+  />
+</div>
+```
+
+### 0.3 Ordem de Implementação
+
+1. **Primeiro**: Executar migrations para adicionar campos no banco
+2. **Segundo**: Ajustar DetalheViagem.jsx para vinculação com valor
+3. **Terceiro**: Ajustar Motoristas.jsx para novos campos
+4. **Quarto**: Começar o módulo financeiro propriamente dito
+
+---
+
 ## 1. Visão Geral
 
 ### 1.1 Contexto
@@ -18,7 +139,19 @@ App de gestão de transfers para agência de turismo em Recife. O módulo financ
 - **Apenas admin** tem acesso ao módulo financeiro
 - Gerente e motoristas não veem essa aba
 
-### 1.3 Stack Atual
+### 1.3 Distinção Importante: Valor vs Valor Motorista
+
+| Campo | Descrição | Quem vê | Moeda |
+|-------|-----------|---------|-------|
+| `valor` | Valor pago pelo fornecedor à agência | Admin | BRL, USD, EUR |
+| `valor_motorista` | Valor que a agência paga ao motorista | Admin (motorista não vê) | Sempre BRL |
+
+**Exemplo prático:**
+- FoxTransfer paga R$ 170 à Água Verde (`valor`)
+- Água Verde paga R$ 100 ao motorista (`valor_motorista`)  
+- Margem da agência: R$ 70 (não calculamos automaticamente por decisão)
+
+### 1.4 Stack Atual
 - React (frontend)
 - Supabase (banco de dados + auth)
 - Vercel (deploy)
@@ -32,24 +165,29 @@ App de gestão de transfers para agência de turismo em Recife. O módulo financ
 ### 2.1 Alterações em Tabelas Existentes
 
 #### Tabela `viagens`
+
+**Campos que JÁ EXISTEM:**
+- `valor` - valor do fornecedor
+- `moeda` - moeda do valor (BRL, USD, EUR)
+- `numero_reserva` - ✅ número de reserva do fornecedor
+- `valor_motorista` - ✅ criado
+- `fornecedor_id` - ✅ criado (FK pendente)
+- `status_pagamento_motorista` - ✅ criado (default 'pendente')
+- `data_pagamento_motorista` - ✅ criado
+- `status_faturamento` - ✅ criado (default 'pendente') - evita dupla-fatura
+
+**Pendente (Fase 1)** - Adicionar FK após criar tabela fornecedores:
 ```sql
-ALTER TABLE viagens ADD COLUMN IF NOT EXISTS valor_motorista DECIMAL(10,2);
-
-ALTER TABLE viagens ADD COLUMN IF NOT EXISTS status_pagamento_motorista VARCHAR(20) 
-  DEFAULT 'pendente' 
-  CHECK (status_pagamento_motorista IN ('pendente', 'pago'));
-
-ALTER TABLE viagens ADD COLUMN IF NOT EXISTS data_pagamento_motorista DATE;
-
-ALTER TABLE viagens ADD COLUMN IF NOT EXISTS fornecedor_id UUID REFERENCES fornecedores(id);
+ALTER TABLE viagens 
+  ADD CONSTRAINT fk_viagens_fornecedor 
+  FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id);
 ```
 
 #### Tabela `motoristas`
-```sql
-ALTER TABLE motoristas ADD COLUMN IF NOT EXISTS pagamento_no_dia BOOLEAN DEFAULT false;
 
-ALTER TABLE motoristas ADD COLUMN IF NOT EXISTS chave_pix VARCHAR(255);
-```
+**Campos que JÁ EXISTEM:**
+- `pagamento_no_dia` - ✅ criado (default false)
+- `chave_pix` - ✅ criado
 
 ### 2.2 Novas Tabelas
 
@@ -95,18 +233,21 @@ INSERT INTO fornecedores (nome, nome_legal, identificador_fiscal, endereco, emai
 ```
 
 #### Tabela `faturas`
+
+> **Nota**: Campo `numero_reserva` removido - já existe em `viagens`. Cada viagem tem seu próprio número de reserva.
+
 ```sql
 CREATE TABLE IF NOT EXISTS faturas (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   numero SERIAL UNIQUE NOT NULL,
-  numero_reserva VARCHAR(50),
+  -- numero_reserva removido: já existe em viagens.numero_reserva
   fornecedor_id UUID REFERENCES fornecedores(id) NOT NULL,
   periodo_inicio DATE NOT NULL,
   periodo_fim DATE NOT NULL,
   valor_total DECIMAL(10,2) NOT NULL,
   moeda VARCHAR(3) DEFAULT 'BRL',
   quantidade_viagens INT NOT NULL,
-  status VARCHAR(20) DEFAULT 'rascunho' 
+  status VARCHAR(20) DEFAULT 'rascunho'
     CHECK (status IN ('rascunho', 'emitida', 'enviada', 'paga', 'vencida')),
   data_emissao DATE,
   data_vencimento DATE,
@@ -136,6 +277,9 @@ CREATE INDEX IF NOT EXISTS idx_fatura_viagens_viagem ON fatura_viagens(viagem_id
 ```
 
 #### Tabela `pagamentos_motoristas`
+
+> **Nota**: Campo `data_pagamento` removido por redundância - usar `criado_em` como data oficial do pagamento.
+
 ```sql
 CREATE TABLE IF NOT EXISTS pagamentos_motoristas (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -144,14 +288,14 @@ CREATE TABLE IF NOT EXISTS pagamentos_motoristas (
   quantidade_viagens INT NOT NULL,
   periodo_inicio DATE NOT NULL,
   periodo_fim DATE NOT NULL,
-  data_pagamento DATE NOT NULL,
+  -- data_pagamento removido: usar criado_em como data do pagamento
   observacoes TEXT,
   criado_por UUID REFERENCES auth.users(id),
-  criado_em TIMESTAMPTZ DEFAULT NOW()
+  criado_em TIMESTAMPTZ DEFAULT NOW() -- Esta é a data oficial do pagamento
 );
 
 CREATE INDEX IF NOT EXISTS idx_pagamentos_motorista ON pagamentos_motoristas(motorista_id);
-CREATE INDEX IF NOT EXISTS idx_pagamentos_data ON pagamentos_motoristas(data_pagamento);
+CREATE INDEX IF NOT EXISTS idx_pagamentos_criado_em ON pagamentos_motoristas(criado_em);
 ```
 
 #### Tabela `pagamento_viagens`
@@ -244,39 +388,34 @@ Adicionar na sidebar (visível apenas para admin):
 7. Resumo no rodapé: total selecionado
 8. Alerta: viagens concluídas sem `valor_motorista`
 
-**Ação "Marcar como pago"**:
+**Ação "Marcar como pago"** (usando função RPC atômica):
+
+> ⚠️ **IMPORTANTE**: Usar a função RPC `marcar_viagens_como_pagas` que executa todas operações em uma única transação. NUNCA fazer 3 chamadas separadas - risco de dados inconsistentes.
+
 ```javascript
-// 1. Atualizar viagens
-await supabase
-  .from('viagens')
-  .update({ 
-    status_pagamento_motorista: 'pago',
-    data_pagamento_motorista: new Date().toISOString().split('T')[0]
+// ✅ CORRETO: Uma única chamada atômica
+async function marcarComoPago(motoristaId, viagemIds, periodoInicio, periodoFim) {
+  const { data, error } = await supabase.rpc('marcar_viagens_como_pagas', {
+    p_motorista_id: motoristaId,
+    p_viagem_ids: viagemIds,
+    p_periodo_inicio: periodoInicio,
+    p_periodo_fim: periodoFim
   })
-  .in('id', viagemIds)
 
-// 2. Criar registro de pagamento
-const { data: pagamento } = await supabase
-  .from('pagamentos_motoristas')
-  .insert({
-    motorista_id,
-    valor_total,
-    quantidade_viagens,
-    periodo_inicio,
-    periodo_fim,
-    data_pagamento: new Date().toISOString().split('T')[0]
-  })
-  .select()
-  .single()
+  if (error) {
+    alert('Erro ao processar pagamento: ' + error.message)
+    return null
+  }
 
-// 3. Criar vínculos com viagens
-await supabase
-  .from('pagamento_viagens')
-  .insert(viagemIds.map(id => ({
-    pagamento_id: pagamento.id,
-    viagem_id: id,
-    valor_pago: viagens.find(v => v.id === id).valor_motorista
-  })))
+  // Retorno: { success: true, pagamento_id: uuid, valor_total: 500.00, quantidade_viagens: 3 }
+  alert(`Pagamento registrado! R$ ${data.valor_total.toFixed(2)} - ${data.quantidade_viagens} viagens`)
+  return data
+}
+
+// ❌ ERRADO: 3 chamadas separadas (risco de inconsistência)
+// await supabase.from('viagens').update(...)      // Se falhar aqui...
+// await supabase.from('pagamentos_motoristas')... // ...ou aqui...
+// await supabase.from('pagamento_viagens')...     // ...dados ficam corrompidos
 ```
 
 **Botão WhatsApp**:
@@ -304,7 +443,7 @@ window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`)
 **Seção 1 - Gerar Nova Fatura**:
 1. Select de fornecedor (buscar de `fornecedores` onde `ativo = true`)
 2. Inputs de período (data início e fim)
-3. Botão "Buscar viagens"
+3. Botão "Buscar viagens" - **filtrar por `status_faturamento = 'pendente'`**
 4. Lista de viagens encontradas com checkbox
 5. Viagens canceladas aparecem com:
    - Ícone ✗ no status
@@ -473,27 +612,43 @@ Adicionar em App.jsx ou equivalente:
 
 ## 7. Fases de Implementação
 
-### Fase 1 - Banco de Dados
-1. Executar migrations via MCP Supabase
-2. Inserir dados iniciais dos fornecedores
-3. Testar RLS policies
+### Fase 0 - Pré-requisitos
+- [x] ~~Migrations para campos no banco~~ ✅ CONCLUÍDO
+- [x] ~~Criar função RPC `marcar_viagens_como_pagas`~~ ✅ CONCLUÍDO (pagamento atômico)
+- [x] ~~Adicionar `status_faturamento` em viagens~~ ✅ CONCLUÍDO (evita dupla-fatura)
+- [ ] Ajustar DetalheViagem.jsx - expandir vinculação com campo de valor_motorista
+- [ ] Ajustar Motoristas.jsx - adicionar campos pagamento_no_dia e chave_pix no form
+- [ ] Testar: vincular motorista com valor, editar motorista com novos campos
+
+### Fase 1 - Banco de Dados do Módulo Financeiro
+1. Criar tabela `fornecedores` com dados iniciais (iNeedTours, FoxTransfer)
+2. Adicionar FK: viagens.fornecedor_id → fornecedores(id)
+3. Criar tabela `faturas`
+4. Criar tabela `fatura_viagens`
+5. Criar tabela `pagamentos_motoristas`
+6. Criar tabela `pagamento_viagens`
+7. Criar RLS policies para todas as novas tabelas
 
 ### Fase 2 - Pagamentos a Motoristas  
-1. Adicionar campos no form de motorista (pagamento_no_dia, chave_pix)
-2. Adicionar campo valor_motorista no form de viagem
-3. Criar componente PagamentosMotoristas
+1. Criar componente PagamentosMotoristas.jsx
+2. Implementar listagem de motoristas com viagens pendentes
+3. Separar seções "Pagamento no dia" vs "Semanal"
 4. Implementar ação "Marcar como pago"
-5. Implementar botão WhatsApp
+5. Implementar botão WhatsApp com mensagem formatada
+6. Implementar alerta de viagens sem valor_motorista
 
 ### Fase 3 - Faturas
-1. Criar componente Faturas (geração + listagem)
-2. Implementar geração de PDF
-3. Testar com dados reais
+1. Criar componente Faturas.jsx (geração + listagem)
+2. Implementar busca de viagens por fornecedor/período
+3. Implementar geração de PDF (template por fornecedor)
+4. Implementar lista de faturas emitidas
+5. Implementar controle de status (aguardando/paga)
 
 ### Fase 4 - Histórico e Refinamentos
-1. Criar componente HistoricoFinanceiro
-2. Adicionar alertas (viagens sem valor, faturas vencendo)
-3. Adicionar item no menu/sidebar
+1. Criar componente HistoricoFinanceiro.jsx
+2. Adicionar item "Financeiro" no menu/sidebar (admin only)
+3. Adicionar rotas protegidas
+4. Testar fluxo completo
 
 ---
 
