@@ -138,7 +138,6 @@ function PerfilMotorista({ perfil, user, logout, voltar, getIniciais }) {
             ref={fotoInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             onChange={handleFotoUpload}
             style={{ display: 'none' }}
           />
