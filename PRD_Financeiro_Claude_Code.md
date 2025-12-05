@@ -612,12 +612,12 @@ Adicionar em App.jsx ou equivalente:
 
 ## 7. Fases de Implementação
 
-### Fase 0 - Pré-requisitos
+### Fase 0 - Pré-requisitos ✅ CONCLUÍDA
 - [x] ~~Migrations para campos no banco~~ ✅ CONCLUÍDO
 - [x] ~~Criar função RPC `marcar_viagens_como_pagas`~~ ✅ CONCLUÍDO (pagamento atômico)
 - [x] ~~Adicionar `status_faturamento` em viagens~~ ✅ CONCLUÍDO (evita dupla-fatura)
-- [ ] Ajustar DetalheViagem.jsx - expandir vinculação com campo de valor_motorista
-- [ ] Ajustar Motoristas.jsx - adicionar campos pagamento_no_dia e chave_pix no form
+- [x] ~~Ajustar DetalheViagem.jsx~~ ✅ CONCLUÍDO - vinculação com valor_motorista + edição posterior
+- [x] ~~Ajustar Motoristas.jsx~~ ✅ CONCLUÍDO - campos pagamento_no_dia e chave_pix no form
 - [ ] Testar: vincular motorista com valor, editar motorista com novos campos
 
 ### Fase 1 - Banco de Dados do Módulo Financeiro
