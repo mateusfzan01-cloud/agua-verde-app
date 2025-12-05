@@ -46,7 +46,11 @@ export function formatarValor(valor, moeda) {
     'EUR': 'EUR'
   }
   const simbolo = simbolos[moeda] || moeda || 'R$'
-  return `${simbolo} ${valor.toFixed(2)}`
+  return `${simbolo} ${parseFloat(valor || 0).toFixed(2)}`
+}
+
+export function formatarMoeda(valor) {
+  return formatarValor(valor, 'BRL')
 }
 
 export function formatarTempo(data) {

@@ -15,6 +15,7 @@ import AcompanharViagem from './components/AcompanharViagem'
 import AceitarConvite from './components/AceitarConvite'
 import Relatorios from './components/Relatorios'
 import Alertas from './components/Alertas'
+import PagamentosMotoristas from './components/PagamentosMotoristas'
 
 function AppContent() {
   const { user, perfil, loading } = useAuth()
@@ -62,6 +63,7 @@ function AppContent() {
             <Route path="/motoristas" element={<Motoristas />} />
             <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/alertas" element={<Alertas />} />
+            <Route path="/financeiro/pagamentos" element={<PagamentosMotoristas />} />
             <Route path="/perfil" element={<Perfil />} />
           </Routes>
         </main>

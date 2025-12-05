@@ -27,7 +27,8 @@ function Relatorios() {
     canceladas: 0,
     noShow: 0,
     emAndamento: 0,
-    faturamentoPorMoeda: {}
+    faturamentoPorMoeda: {},
+    repasses: 0 // soma de valor_motorista (sempre BRL)
   })
 
   // Ranking de motoristas
@@ -85,13 +86,19 @@ function Relatorios() {
         faturamentoPorMoeda[moeda] += v.valor
       })
 
+    // Calcular repasses (soma de valor_motorista) - sempre em BRL
+    const repasses = dados
+      .filter(v => v.status === 'concluida' && v.valor_motorista)
+      .reduce((acc, v) => acc + parseFloat(v.valor_motorista), 0)
+
     setMetricas({
       total,
       concluidas,
       canceladas,
       noShow,
       emAndamento,
-      faturamentoPorMoeda
+      faturamentoPorMoeda,
+      repasses
     })
   }
 
@@ -108,7 +115,8 @@ function Relatorios() {
             concluidas: 0,
             canceladas: 0,
             noShow: 0,
-            faturamentoPorMoeda: {}
+            faturamentoPorMoeda: {},
+            valorRecebido: 0 // soma de valor_motorista (sempre BRL)
           }
         }
         porMotorista[v.motorista_id].total++
@@ -120,6 +128,10 @@ function Relatorios() {
               porMotorista[v.motorista_id].faturamentoPorMoeda[moeda] = 0
             }
             porMotorista[v.motorista_id].faturamentoPorMoeda[moeda] += v.valor
+          }
+          // Acumular valor_motorista
+          if (v.valor_motorista) {
+            porMotorista[v.motorista_id].valorRecebido += parseFloat(v.valor_motorista)
           }
         }
         if (v.status === 'cancelada') {
@@ -299,6 +311,22 @@ function Relatorios() {
                 <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.9)', marginTop: 4 }}>Faturamento</div>
               </div>
             )}
+            {/* Card de Repasses (valor_motorista) - sempre BRL */}
+            <div className="card" style={{ padding: 20, textAlign: 'center', background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)' }}>
+              <div style={{ fontSize: 28, fontWeight: 700, color: 'white' }}>
+                R$ {metricas.repasses.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </div>
+              <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.9)', marginTop: 4 }}>Repasses Motoristas</div>
+            </div>
+            {/* Card de Margem (Faturamento BRL - Repasses) */}
+            {metricas.faturamentoPorMoeda['BRL'] !== undefined && (
+              <div className="card" style={{ padding: 20, textAlign: 'center', background: 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)' }}>
+                <div style={{ fontSize: 28, fontWeight: 700, color: 'white' }}>
+                  R$ {((metricas.faturamentoPorMoeda['BRL'] || 0) - metricas.repasses).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+                <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.9)', marginTop: 4 }}>Margem (BRL)</div>
+              </div>
+            )}
           </div>
 
           <div className="content-grid">
@@ -373,7 +401,16 @@ function Relatorios() {
                           </div>
                         </div>
 
-                        <div style={{ textAlign: 'right' }}>
+                        {/* Valor recebido pelo motorista */}
+                        <div style={{ textAlign: 'right', minWidth: 90 }}>
+                          <div style={{ fontWeight: 700, color: '#e74c3c', fontSize: 14 }}>
+                            R$ {item.valorRecebido.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </div>
+                          <div style={{ fontSize: 10, color: '#999' }}>recebido</div>
+                        </div>
+
+                        {/* Faturamento por moeda */}
+                        <div style={{ textAlign: 'right', minWidth: 100 }}>
                           {Object.keys(item.faturamentoPorMoeda).length > 0 ? (
                             Object.entries(item.faturamentoPorMoeda).map(([moeda, valor]) => {
                               const simbolos = { 'BRL': 'R$', 'USD': 'US$', 'EUR': 'EUR' }
