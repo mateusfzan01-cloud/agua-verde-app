@@ -427,6 +427,55 @@ function Faturas() {
     return { icon: '⏳', label: 'Aguardando', color: '#f39c12' }
   }
 
+  async function excluirFatura(faturaId) {
+    if (!confirm('Tem certeza que deseja excluir esta fatura?\n\nAs viagens vinculadas voltarão a ficar disponíveis para faturamento.')) {
+      return
+    }
+
+    try {
+      // 1. Buscar viagens vinculadas a esta fatura
+      const { data: faturaViagens } = await supabase
+        .from('fatura_viagens')
+        .select('viagem_id')
+        .eq('fatura_id', faturaId)
+
+      const viagemIds = faturaViagens?.map(fv => fv.viagem_id) || []
+
+      // 2. Atualizar status_faturamento das viagens para 'pendente'
+      if (viagemIds.length > 0) {
+        const { error: updateError } = await supabase
+          .from('viagens')
+          .update({ status_faturamento: 'pendente' })
+          .in('id', viagemIds)
+
+        if (updateError) throw updateError
+      }
+
+      // 3. Deletar registros de fatura_viagens
+      const { error: deleteVinculosError } = await supabase
+        .from('fatura_viagens')
+        .delete()
+        .eq('fatura_id', faturaId)
+
+      if (deleteVinculosError) throw deleteVinculosError
+
+      // 4. Deletar a fatura
+      const { error: deleteFaturaError } = await supabase
+        .from('faturas')
+        .delete()
+        .eq('id', faturaId)
+
+      if (deleteFaturaError) throw deleteFaturaError
+
+      alert('Fatura excluída com sucesso!')
+      carregarDados()
+
+    } catch (error) {
+      console.error('Erro ao excluir fatura:', error)
+      alert('Erro ao excluir fatura: ' + error.message)
+    }
+  }
+
   // Verificação de acesso admin
   if (perfil?.tipo !== 'admin') {
     return (
@@ -812,21 +861,38 @@ function Faturas() {
                             Ver PDF
                           </button>
                           {fatura.status !== 'paga' && (
-                            <button
-                              onClick={() => marcarFaturaComoPaga(fatura.id)}
-                              style={{
-                                padding: '6px 12px',
-                                background: '#e8f5e9',
-                                color: '#27ae60',
-                                border: 'none',
-                                borderRadius: 6,
-                                cursor: 'pointer',
-                                fontSize: 13,
-                                fontWeight: 500
-                              }}
-                            >
-                              Marcar paga
-                            </button>
+                            <>
+                              <button
+                                onClick={() => marcarFaturaComoPaga(fatura.id)}
+                                style={{
+                                  padding: '6px 12px',
+                                  background: '#e8f5e9',
+                                  color: '#27ae60',
+                                  border: 'none',
+                                  borderRadius: 6,
+                                  cursor: 'pointer',
+                                  fontSize: 13,
+                                  fontWeight: 500
+                                }}
+                              >
+                                Marcar paga
+                              </button>
+                              <button
+                                onClick={() => excluirFatura(fatura.id)}
+                                style={{
+                                  padding: '6px 12px',
+                                  background: '#ffebee',
+                                  color: '#c62828',
+                                  border: 'none',
+                                  borderRadius: 6,
+                                  cursor: 'pointer',
+                                  fontSize: 13,
+                                  fontWeight: 500
+                                }}
+                              >
+                                Excluir
+                              </button>
+                            </>
                           )}
                         </div>
                       </td>
