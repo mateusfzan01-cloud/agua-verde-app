@@ -16,6 +16,8 @@ function DetalheViagem() {
   const [novaOcorrencia, setNovaOcorrencia] = useState({ tipo: 'outro', descricao: '' })
   const [excluindo, setExcluindo] = useState(false)
   const [vinculacao, setVinculacao] = useState({ motorista_id: '', valor_motorista: '' })
+  const [editandoValorMotorista, setEditandoValorMotorista] = useState(false)
+  const [novoValorMotorista, setNovoValorMotorista] = useState('')
 
   useEffect(() => {
     fetchViagem()
@@ -107,6 +109,27 @@ function DetalheViagem() {
         descricao: `Motorista vinculado: ${motorista?.nome}`
       }])
       setVinculacao({ motorista_id: '', valor_motorista: '' })
+      fetchViagem()
+    }
+  }
+
+  async function salvarValorMotorista() {
+    const valor = parseFloat(novoValorMotorista)
+    if (isNaN(valor) || valor < 0) {
+      alert('Digite um valor válido')
+      return
+    }
+
+    const { error } = await supabase
+      .from('viagens')
+      .update({ valor_motorista: valor })
+      .eq('id', id)
+
+    if (error) {
+      alert('Erro ao salvar valor')
+    } else {
+      setEditandoValorMotorista(false)
+      setNovoValorMotorista('')
       fetchViagem()
     }
   }
@@ -678,6 +701,76 @@ function DetalheViagem() {
       </svg>
       Notificar Motorista
     </button>
+
+    {/* Valor do Motorista */}
+    <div style={{
+      marginTop: 16,
+      padding: 16,
+      background: '#e3f2fd',
+      borderRadius: 8,
+      border: '1px solid #bbdefb'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: '#1565c0', textTransform: 'uppercase' }}>
+          Repasse Motorista (R$)
+        </label>
+        {!editandoValorMotorista && (
+          <button
+            onClick={() => {
+              setNovoValorMotorista(viagem.valor_motorista?.toString() || '')
+              setEditandoValorMotorista(true)
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#1565c0',
+              fontSize: 13,
+              cursor: 'pointer',
+              fontWeight: 500
+            }}
+          >
+            {viagem.valor_motorista ? 'Editar' : 'Definir'}
+          </button>
+        )}
+      </div>
+
+      {editandoValorMotorista ? (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={novoValorMotorista}
+            onChange={(e) => setNovoValorMotorista(e.target.value)}
+            placeholder="Ex: 80.00"
+            className="form-input"
+            style={{ flex: 1 }}
+            autoFocus
+          />
+          <button
+            onClick={salvarValorMotorista}
+            className="btn btn-primary"
+            style={{ padding: '8px 16px' }}
+          >
+            Salvar
+          </button>
+          <button
+            onClick={() => {
+              setEditandoValorMotorista(false)
+              setNovoValorMotorista('')
+            }}
+            className="btn btn-secondary"
+            style={{ padding: '8px 16px' }}
+          >
+            Cancelar
+          </button>
+        </div>
+      ) : (
+        <div style={{ fontSize: 20, fontWeight: 700, color: viagem.valor_motorista ? '#1565c0' : '#999' }}>
+          {viagem.valor_motorista ? `R$ ${viagem.valor_motorista.toFixed(2)}` : 'Não definido'}
+        </div>
+      )}
+    </div>
   </div>
 ) : (
               <form onSubmit={vincularMotorista}>
