@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { formatarMoeda } from '../utils/formatters'
 import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import autoTable from 'jspdf-autotable'
 
 // Dados da empresa Água Verde
 const EMPRESA = {
@@ -232,7 +232,7 @@ function Faturas() {
       })
     }
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: 95,
       head: [tableColumns],
       body: tableData,
