@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { supabase } from '../../supabaseClient'
 
-function ModalOcorrencia({ viagemId, perfilNome, onClose, onSucesso }) {
+const ModalOcorrencia = memo(function ModalOcorrencia({ viagemId, perfilNome, onClose, onSucesso }) {
   const [tipoOcorrencia, setTipoOcorrencia] = useState('outro')
   const [textoOcorrencia, setTextoOcorrencia] = useState('')
 
@@ -85,6 +85,6 @@ function ModalOcorrencia({ viagemId, perfilNome, onClose, onSucesso }) {
       </div>
     </div>
   )
-}
+})
 
 export default ModalOcorrencia

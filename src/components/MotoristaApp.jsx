@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../supabaseClient'
 import { formatarHora, getIniciais } from '../utils/formatters'
@@ -211,7 +211,7 @@ function MotoristaApp() {
     return data.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
   }
 
-  function getBotaoAcao(viagem) {
+  const getBotaoAcao = useCallback((viagem) => {
     switch (viagem.status) {
       case 'vinculada':
         return { texto: 'Iniciar Deslocamento', proximo: 'a_caminho', cor: '#3498db' }
@@ -224,9 +224,9 @@ function MotoristaApp() {
       default:
         return null
     }
-  }
+  }, [])
 
-  function getStatusLabel(status) {
+  const getStatusLabel = useCallback((status) => {
     const labels = {
       vinculada: 'Aguardando',
       a_caminho: 'A caminho',
@@ -237,16 +237,25 @@ function MotoristaApp() {
       no_show: 'No-Show'
     }
     return labels[status] || status
-  }
+  }, [])
 
-  function contarViagensDia(dia) {
+  const contarViagensDia = useCallback((dia) => {
     const dataStr = `${dataAtual.getFullYear()}-${String(dataAtual.getMonth() + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
     return viagensMes.filter(v => v.data_hora.startsWith(dataStr)).length
-  }
+  }, [dataAtual, viagensMes])
 
-  const viagemAtual = viagens.find(v => ['a_caminho', 'aguardando_passageiro', 'em_andamento'].includes(v.status))
-  const proximasViagens = viagens.filter(v => v.status === 'vinculada')
-  const viagensConcluidas = viagens.filter(v => v.status === 'concluida' || v.status === 'no_show')
+  const viagemAtual = useMemo(() =>
+    viagens.find(v => ['a_caminho', 'aguardando_passageiro', 'em_andamento'].includes(v.status)),
+    [viagens]
+  )
+  const proximasViagens = useMemo(() =>
+    viagens.filter(v => v.status === 'vinculada'),
+    [viagens]
+  )
+  const viagensConcluidas = useMemo(() =>
+    viagens.filter(v => v.status === 'concluida' || v.status === 'no_show'),
+    [viagens]
+  )
 
   if (mostrarPerfil) {
     return <PerfilMotorista perfil={perfil} user={user} logout={logout} voltar={() => setMostrarPerfil(false)} getIniciais={getIniciais} />

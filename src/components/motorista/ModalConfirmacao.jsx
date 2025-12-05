@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { supabase } from '../../supabaseClient'
 
-function ModalConfirmacao({ viagem, perfilNome, onClose, onSucesso }) {
+const ModalConfirmacao = memo(function ModalConfirmacao({ viagem, perfilNome, onClose, onSucesso }) {
   const [dadosConfirmacao, setDadosConfirmacao] = useState({
     passageiros: viagem.quantidade_passageiros || 1,
     bagagens_grandes: viagem.bagagens_grandes || 0,
@@ -170,6 +170,6 @@ function ModalConfirmacao({ viagem, perfilNome, onClose, onSucesso }) {
       </div>
     </div>
   )
-}
+})
 
 export default ModalConfirmacao

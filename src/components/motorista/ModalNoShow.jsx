@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, memo } from 'react'
 import { supabase } from '../../supabaseClient'
 
-function ModalNoShow({ viagem, perfilNome, onClose, onSucesso }) {
+const ModalNoShow = memo(function ModalNoShow({ viagem, perfilNome, onClose, onSucesso }) {
   const [noShowFoto, setNoShowFoto] = useState(null)
   const [noShowPreview, setNoShowPreview] = useState(null)
   const [noShowLocation, setNoShowLocation] = useState(null)
@@ -280,6 +280,6 @@ function ModalNoShow({ viagem, perfilNome, onClose, onSucesso }) {
       </div>
     </div>
   )
-}
+})
 
 export default ModalNoShow

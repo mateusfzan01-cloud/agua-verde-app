@@ -1,4 +1,6 @@
-function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atualizarStatus, setModalOcorrencia, abrirModalConfirmacao, abrirModalNoShow, destaque }) {
+import { memo } from 'react'
+
+const ViagemCard = memo(function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atualizarStatus, setModalOcorrencia, abrirModalConfirmacao, abrirModalNoShow, destaque }) {
   const botao = getBotaoAcao(viagem)
   const totalBagagens = (viagem.bagagens_grandes || 0) + (viagem.bagagens_pequenas || 0)
 
@@ -155,6 +157,6 @@ function ViagemCard({ viagem, formatarHora, getStatusLabel, getBotaoAcao, atuali
       </div>
     </div>
   )
-}
+})
 
 export default ViagemCard

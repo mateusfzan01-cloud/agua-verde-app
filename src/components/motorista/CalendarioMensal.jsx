@@ -1,4 +1,6 @@
-function CalendarioMensal({ dataAtual, navegarMes, formatarMes, contarViagensDia, selecionarDia, carregando }) {
+import { memo } from 'react'
+
+const CalendarioMensal = memo(function CalendarioMensal({ dataAtual, navegarMes, formatarMes, contarViagensDia, selecionarDia, carregando }) {
   const ano = dataAtual.getFullYear()
   const mes = dataAtual.getMonth()
   const primeiroDia = new Date(ano, mes, 1).getDay()
@@ -105,6 +107,6 @@ function CalendarioMensal({ dataAtual, navegarMes, formatarMes, contarViagensDia
       </div>
     </div>
   )
-}
+})
 
 export default CalendarioMensal
