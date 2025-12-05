@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { supabase } from '../../supabaseClient'
 
 function PerfilMotorista({ perfil, user, logout, voltar, getIniciais }) {
@@ -8,6 +8,9 @@ function PerfilMotorista({ perfil, user, logout, voltar, getIniciais }) {
   const [salvando, setSalvando] = useState(false)
   const [fotoUrl, setFotoUrl] = useState(perfil?.foto_url || '')
   const [uploadando, setUploadando] = useState(false)
+
+  // Ref para o input de foto (fix mobile upload)
+  const fotoInputRef = useRef(null)
 
   async function handleFotoUpload(e) {
     const file = e.target.files?.[0]
@@ -128,15 +131,23 @@ function PerfilMotorista({ perfil, user, logout, voltar, getIniciais }) {
       </div>
 
       <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
-        {/* Avatar com upload */}
+        {/* Avatar com upload - CORRIGIDO: usando ref + click programático para compatibilidade mobile */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <label style={{ cursor: 'pointer', display: 'inline-block', position: 'relative' }}>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFotoUpload}
-              style={{ display: 'none' }}
-            />
+          {/* Input escondido com ref (fora do elemento clicável para compatibilidade Android) */}
+          <input
+            ref={fotoInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFotoUpload}
+            style={{ display: 'none' }}
+          />
+
+          {/* Div clicável que aciona o input via ref */}
+          <div
+            onClick={() => fotoInputRef.current?.click()}
+            style={{ cursor: 'pointer', display: 'inline-block', position: 'relative' }}
+          >
             {fotoUrl ? (
               <img
                 src={fotoUrl}
@@ -182,7 +193,8 @@ function PerfilMotorista({ perfil, user, logout, voltar, getIniciais }) {
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
               </svg>
             </div>
-          </label>
+          </div>
+
           {uploadando && <div style={{ marginTop: '8px', color: '#666' }}>Enviando...</div>}
           <div style={{ fontSize: '12px', color: '#666', textTransform: 'uppercase', marginTop: '8px' }}>
             Toque para alterar foto
