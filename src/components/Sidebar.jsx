@@ -1,14 +1,11 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { getIniciais } from '../utils/formatters'
 import { useAlertas } from '../contexts/AlertasContext'
 
 function Sidebar() {
   const { perfil, logout } = useAuth()
   const { contador } = useAlertas()
-
-  function getIniciais(nome) {
-    return nome?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??'
-  }
 
   return (
     <aside className="sidebar">

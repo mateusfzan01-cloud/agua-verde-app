@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
+import { formatarDataHora, formatarTempo, formatarStatus, getIniciais, getTipoOcorrencia, formatarValor } from '../utils/formatters'
 
 function DetalheViagem() {
   const { id } = useParams()
@@ -146,69 +147,6 @@ function DetalheViagem() {
     } else {
       navigate('/viagens')
     }
-  }
-
-  function formatarDataHora(dataHora) {
-    const data = new Date(dataHora)
-    return {
-      data: data.toLocaleDateString('pt-BR'),
-      hora: data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      relativo: formatarTempo(data)
-    }
-  }
-
-  function formatarTempo(data) {
-    const agora = new Date()
-    const diff = agora - data
-    const minutos = Math.floor(diff / 60000)
-    const horas = Math.floor(minutos / 60)
-    const dias = Math.floor(horas / 24)
-
-    if (dias > 0) return `Há ${dias} dia${dias > 1 ? 's' : ''}`
-    if (horas > 0) return `Há ${horas} hora${horas > 1 ? 's' : ''}`
-    if (minutos > 0) return `Há ${minutos} min`
-    return 'Agora'
-  }
-
-  function formatarStatus(status) {
-    const statusMap = {
-      'pendente': 'Pendente',
-      'vinculada': 'Vinculada',
-      'a_caminho': 'A Caminho',
-      'aguardando_passageiro': 'Aguardando Passageiro',
-      'em_andamento': 'Em Andamento',
-      'concluida': 'Concluída',
-      'cancelada': 'Cancelada',
-      'no_show': 'No-Show'
-    }
-    return statusMap[status] || status
-  }
-
-  function getIniciais(nome) {
-    return nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-  }
-
-  function getTipoOcorrencia(tipo) {
-    const tipos = {
-      'atraso_voo': 'Atraso de voo',
-      'atraso_motorista': 'Atraso do motorista',
-      'atraso_passageiro': 'Atraso do passageiro',
-      'cancelamento': 'Cancelamento',
-      'alteracao_status': 'Alteração de status',
-      'no_show': 'No-Show',
-      'outro': 'Outro'
-    }
-    return tipos[tipo] || tipo
-  }
-
-  function formatarValor(valor, moeda) {
-    const simbolos = {
-      'BRL': 'R$',
-      'USD': 'US$',
-      'EUR': 'EUR'
-    }
-    const simbolo = simbolos[moeda] || moeda || 'R$'
-    return `${simbolo} ${valor.toFixed(2)}`
   }
 
   if (loading) {

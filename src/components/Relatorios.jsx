@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useNavigate } from 'react-router-dom'
+import { formatarData, formatarHora, formatarStatus, getIniciais, formatarValor } from '../utils/formatters'
 
 function Relatorios() {
   const navigate = useNavigate()
@@ -135,42 +136,6 @@ function Relatorios() {
       .sort((a, b) => b.concluidas - a.concluidas)
 
     setRanking(rankingArray)
-  }
-
-  function formatarData(dataHora) {
-    return new Date(dataHora).toLocaleDateString('pt-BR')
-  }
-
-  function formatarHora(dataHora) {
-    return new Date(dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  }
-
-  function formatarStatus(status) {
-    const statusMap = {
-      'pendente': 'Pendente',
-      'vinculada': 'Vinculada',
-      'a_caminho': 'A Caminho',
-      'aguardando_passageiro': 'Aguardando',
-      'em_andamento': 'Em Andamento',
-      'concluida': 'Concluida',
-      'cancelada': 'Cancelada',
-      'no_show': 'No-Show'
-    }
-    return statusMap[status] || status
-  }
-
-  function getIniciais(nome) {
-    return nome?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??'
-  }
-
-  function formatarValor(valor, moeda) {
-    const simbolos = {
-      'BRL': 'R$',
-      'USD': 'US$',
-      'EUR': 'EUR'
-    }
-    const simbolo = simbolos[moeda] || moeda || 'R$'
-    return `${simbolo} ${valor.toFixed(2)}`
   }
 
   function aplicarPeriodoRapido(tipo) {

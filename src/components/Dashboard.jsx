@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import AlertasPanel from './AlertasPanel'
+import { formatarHora, getIniciais, formatarStatus } from '../utils/formatters'
 
 function Dashboard() {
   const [viagens, setViagens] = useState([])
@@ -60,31 +61,12 @@ function Dashboard() {
     setLoading(false)
   }
 
-  function formatarHora(dataHora) {
-    return new Date(dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  }
 
-  function getIniciais(nome) {
-    return nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-  }
 
   function getStatusClass(status) {
     return `status-badge status-${status}`
   }
 
-  function formatarStatus(status) {
-    const statusMap = {
-      'pendente': 'Pendente',
-      'vinculada': 'Vinculada',
-      'a_caminho': 'A Caminho',
-      'aguardando_passageiro': 'Aguardando',
-      'em_andamento': 'Em Andamento',
-      'concluida': 'Concluída',
-      'cancelada': 'Cancelada',
-      'no_show': 'No-Show'
-    }
-    return statusMap[status] || status
-  }
 
   // Componente de Avatar reutilizável
   function Avatar({ nome, fotoUrl, tamanho = 'normal' }) {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { formatarDataHora, getIniciais, formatarStatus } from '../utils/formatters'
 
 function Viagens() {
   const [viagens, setViagens] = useState([])
@@ -81,31 +82,6 @@ function Viagens() {
 
   function limparFiltros() {
     setFiltros({ busca: '', data: '', status: '', motorista: '' })
-  }
-
-  function formatarDataHora(dataHora) {
-    const data = new Date(dataHora)
-    return {
-      data: data.toLocaleDateString('pt-BR'),
-      hora: data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    }
-  }
-
-  function getIniciais(nome) {
-    return nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-  }
-
-  function formatarStatus(status) {
-    const statusMap = {
-      'pendente': 'Pendente',
-      'vinculada': 'Vinculada',
-      'a_caminho': 'A Caminho',
-      'aguardando_passageiro': 'Aguardando',
-      'em_andamento': 'Em Andamento',
-      'concluida': 'Concluída',
-      'cancelada': 'Cancelada'
-    }
-    return statusMap[status] || status
   }
 
   const viagensFiltradas = aplicarFiltros()

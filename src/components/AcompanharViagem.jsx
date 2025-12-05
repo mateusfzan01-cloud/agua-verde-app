@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
+import { getIniciais } from '../utils/formatters'
 import { supabase } from '../supabaseClient'
 
 function AcompanharViagem() {
@@ -124,11 +125,6 @@ function AcompanharViagem() {
       }
     }
     return statusMap[status] || { label: status, descricao: '', icone: '❓', cor: '#999', etapa: 0 }
-  }
-
-  function getIniciais(nome) {
-    if (!nome) return '??'
-    return nome.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
   }
 
   // Número de contato da agência

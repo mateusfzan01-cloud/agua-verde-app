@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getIniciais } from '../utils/formatters'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../supabaseClient'
 
@@ -16,10 +17,6 @@ function Perfil() {
     confirmarSenha: ''
   })
   const [mensagem, setMensagem] = useState({ tipo: '', texto: '' })
-
-  function getIniciais(nome) {
-    return nome?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??'
-  }
 
   async function handleSalvarPerfil(e) {
     e.preventDefault()

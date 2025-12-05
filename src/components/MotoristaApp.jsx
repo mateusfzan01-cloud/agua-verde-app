@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../supabaseClient'
+import { formatarHora, getIniciais } from '../utils/formatters'
 
 function MotoristaApp() {
   const { perfil, logout, user } = useAuth()
@@ -445,10 +446,6 @@ function MotoristaApp() {
     return data.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
   }
 
-  function formatarHora(dataHora) {
-    return new Date(dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-  }
-
   function getBotaoAcao(viagem) {
     switch (viagem.status) {
       case 'vinculada':
@@ -475,10 +472,6 @@ function MotoristaApp() {
       no_show: 'No-Show'
     }
     return labels[status] || status
-  }
-
-  function getIniciais(nome) {
-    return nome?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??'
   }
 
   function contarViagensDia(dia) {

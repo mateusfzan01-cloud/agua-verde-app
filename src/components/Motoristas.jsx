@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
+import { getIniciais } from '../utils/formatters'
 
 function Motoristas() {
   const { user } = useAuth()
@@ -183,10 +184,6 @@ function Motoristas() {
     const mensagem = `Olá, ${modalConvite.nome}!\n\nVocê foi convidado a fazer parte da equipe Água Verde Turismo.\n\nClique no link abaixo para criar sua conta:\n${linkConvite}\n\nEste link expira em 7 dias.`
     const telefone = modalConvite.telefone?.replace(/\D/g, '')
     window.open(`https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`, '_blank')
-  }
-
-  function getIniciais(nome) {
-    return nome?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || '??'
   }
 
   if (loading) {
