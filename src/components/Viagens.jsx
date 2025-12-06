@@ -57,7 +57,8 @@ function Viagens() {
       const busca = filtros.busca.toLowerCase()
       resultado = resultado.filter(v =>
         (v.passageiro_nome ?? '').toLowerCase().includes(busca) ||
-        (v.passageiro_telefone ?? '').includes(busca)
+        (v.passageiro_telefone ?? '').includes(busca) ||
+        (v.numero_reserva ?? '').toLowerCase().includes(busca)
       )
     }
 
@@ -124,7 +125,7 @@ function Viagens() {
             <input
               type="text"
               className="filter-input"
-              placeholder="Nome do passageiro, telefone..."
+              placeholder="Nome, telefone, reserva..."
               value={filtros.busca}
               onChange={(e) => handleFiltroChange({ ...filtros, busca: e.target.value })}
             />
@@ -222,7 +223,16 @@ function Viagens() {
                 const { data, hora } = formatarDataHora(viagem.data_hora)
                 return (
                   <tr key={viagem.id} onClick={() => navigate(`/viagens/${viagem.id}`)}>
-                    <td><span style={{ fontWeight: 600, color: 'var(--verde-escuro)', fontSize: 13 }}>#{viagem.id}</span></td>
+                    <td>
+                      <div>
+                        <span style={{ fontWeight: 600, color: 'var(--verde-escuro)', fontSize: 13 }}>#{viagem.id}</span>
+                        {viagem.numero_reserva && (
+                          <div style={{ fontSize: 11, color: 'var(--cinza-texto)', marginTop: 2 }}>
+                            {viagem.numero_reserva}
+                          </div>
+                        )}
+                      </div>
+                    </td>
                     <td>
                       <div>
                         <div style={{ fontWeight: 600 }}>{data}</div>
