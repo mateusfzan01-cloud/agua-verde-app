@@ -606,7 +606,7 @@ function DetalheViagem() {
                 </div>
                 <button
                   onClick={() => {
-                    const link = `https://agua-verde-app.vercel.app/acompanhar/${viagem.token_cliente || viagem.id}`
+                    const link = `https://app.aguaverde.tur.br/acompanhar/${viagem.token_cliente || viagem.id}`
 
                     let mensagem = `Olá, ${viagem.passageiro_nome}!\n\n*Água Verde Turismo*\n\n*Data:* ${data}\n*Horário:* ${hora}\n*Origem:* ${viagem.origem}\n*Destino:* ${viagem.destino}`
 
@@ -659,7 +659,7 @@ function DetalheViagem() {
                       fontFamily: 'monospace',
                       fontSize: 11
                     }}>
-                      https://agua-verde-app.vercel.app/acompanhar/{viagem.token_cliente}
+                      https://app.aguaverde.tur.br/acompanhar/{viagem.token_cliente}
                     </div>
                   </div>
                 )}
@@ -691,7 +691,7 @@ function DetalheViagem() {
     </div>
     <button
       onClick={() => {
-       const mensagem = `*Nova viagem atribuída!*\n\n*Data:* ${data} às ${hora}\n*Origem:* ${viagem.origem}\n*Destino:* ${viagem.destino}\n*Passageiro:* ${viagem.passageiro_nome}\n*Quantidade:* ${viagem.quantidade_passageiros} pessoa(s)\n*Bagagens:* ${(viagem.bagagens_grandes || 0)} grande(s)   ${(viagem.bagagens_pequenas || 0)} pequena(s)\n\n*Acesse o app:* https://agua-verde-app.vercel.app/`
+       const mensagem = `*Nova viagem atribuída!*\n\n*Data:* ${data} às ${hora}\n*Origem:* ${viagem.origem}\n*Destino:* ${viagem.destino}\n*Passageiro:* ${viagem.passageiro_nome}\n*Quantidade:* ${viagem.quantidade_passageiros} pessoa(s)\n*Bagagens:* ${(viagem.bagagens_grandes || 0)} grande(s)   ${(viagem.bagagens_pequenas || 0)} pequena(s)\n\n*Acesse o app:* https://app.aguaverde.tur.br/`
         let telefone = viagem.motoristas.telefone.replace(/\D/g, '')
         // Se tiver 10 ou 11 dígitos, é número brasileiro sem código do país
         // Se tiver 12 ou 13 dígitos e começar com 55, já tem código do país

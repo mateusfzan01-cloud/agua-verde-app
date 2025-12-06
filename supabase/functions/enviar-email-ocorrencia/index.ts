@@ -160,7 +160,7 @@ serve(async (req) => {
 
                 <div class="footer">
                   <p>Este email foi enviado automaticamente pelo sistema Agua Verde Turismo.</p>
-                  <p><a href="https://agua-verde-app.vercel.app/viagens/${viagem.id}">Ver detalhes da viagem</a></p>
+                  <p><a href="https://app.aguaverde.tur.br/viagens/${viagem.id}">Ver detalhes da viagem</a></p>
                 </div>
               </div>
             </div>

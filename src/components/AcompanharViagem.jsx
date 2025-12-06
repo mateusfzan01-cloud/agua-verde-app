@@ -451,7 +451,7 @@ function AcompanharViagem() {
             boxShadow: '0 2px 10px rgba(0,0,0,0.08)'
           }}>
             <h2 style={{ margin: '0 0 16px', fontSize: 16, color: '#333' }}>
-              📍 Localizacao do Motorista
+              📍 Localização do Motorista
             </h2>
             <Suspense fallback={
               <div style={{
