@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { useAuth } from '../contexts/AuthContext'
 import { formatarDataHora, formatarTempo, formatarStatus, getIniciais, getTipoOcorrencia, formatarValor } from '../utils/formatters'
+import StarRating from './StarRating'
 
 function DetalheViagem() {
   const { id } = useParams()
@@ -869,6 +870,117 @@ function DetalheViagem() {
             </>
           )}
         </div>
+
+        {/* Avaliação do Passageiro */}
+        {viagem.avaliacao_nota && (
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">Avaliação do Passageiro</h2>
+            </div>
+            <div className="card-body">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <StarRating rating={viagem.avaliacao_nota} size="md" showValue />
+                <span style={{
+                  fontSize: 14,
+                  color: viagem.avaliacao_nota >= 4 ? '#27ae60' : viagem.avaliacao_nota >= 3 ? '#f39c12' : '#e74c3c',
+                  fontWeight: 500
+                }}>
+                  {viagem.avaliacao_nota === 5 && 'Excelente'}
+                  {viagem.avaliacao_nota === 4 && 'Muito bom'}
+                  {viagem.avaliacao_nota === 3 && 'Bom'}
+                  {viagem.avaliacao_nota === 2 && 'Regular'}
+                  {viagem.avaliacao_nota === 1 && 'Ruim'}
+                </span>
+              </div>
+              {viagem.avaliacao_comentario && (
+                <div style={{
+                  marginTop: 12,
+                  padding: 12,
+                  background: '#f8f9fa',
+                  borderRadius: 8,
+                  fontStyle: 'italic',
+                  color: '#555'
+                }}>
+                  "{viagem.avaliacao_comentario}"
+                </div>
+              )}
+              {viagem.avaliacao_data && (
+                <div style={{ marginTop: 8, fontSize: 12, color: '#999' }}>
+                  Avaliado em {new Date(viagem.avaliacao_data).toLocaleString('pt-BR')}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Localização Capturada */}
+        {(viagem.local_inicio_lat || viagem.local_fim_lat) && (
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">Localização Capturada</h2>
+            </div>
+            <div className="card-body">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {viagem.local_inicio_lat && (
+                  <div style={{
+                    padding: 12,
+                    background: '#e8f5e9',
+                    borderRadius: 8,
+                    borderLeft: '4px solid #27ae60'
+                  }}>
+                    <div style={{ fontWeight: 600, color: '#2e7d32', marginBottom: 4 }}>
+                      📍 Início da Viagem
+                    </div>
+                    <div style={{ fontSize: 14, color: '#333' }}>
+                      {viagem.local_inicio_endereco || `${viagem.local_inicio_lat}, ${viagem.local_inicio_lng}`}
+                    </div>
+                    {viagem.local_inicio_timestamp && (
+                      <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                        {new Date(viagem.local_inicio_timestamp).toLocaleString('pt-BR')}
+                      </div>
+                    )}
+                    <a
+                      href={`https://www.google.com/maps?q=${viagem.local_inicio_lat},${viagem.local_inicio_lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: 12, color: '#1565c0', marginTop: 4, display: 'inline-block' }}
+                    >
+                      Ver no mapa →
+                    </a>
+                  </div>
+                )}
+                {viagem.local_fim_lat && (
+                  <div style={{
+                    padding: 12,
+                    background: '#ffebee',
+                    borderRadius: 8,
+                    borderLeft: '4px solid #e74c3c'
+                  }}>
+                    <div style={{ fontWeight: 600, color: '#c62828', marginBottom: 4 }}>
+                      🏁 Fim da Viagem
+                    </div>
+                    <div style={{ fontSize: 14, color: '#333' }}>
+                      {viagem.local_fim_endereco || `${viagem.local_fim_lat}, ${viagem.local_fim_lng}`}
+                    </div>
+                    {viagem.local_fim_timestamp && (
+                      <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
+                        {new Date(viagem.local_fim_timestamp).toLocaleString('pt-BR')}
+                      </div>
+                    )}
+                    <a
+                      href={`https://www.google.com/maps?q=${viagem.local_fim_lat},${viagem.local_fim_lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontSize: 12, color: '#1565c0', marginTop: 4, display: 'inline-block' }}
+                    >
+                      Ver no mapa →
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Timeline */}
         <div className="card">
