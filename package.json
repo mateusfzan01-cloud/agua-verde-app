@@ -12,6 +12,7 @@
     "@supabase/supabase-js": "^2.39.0",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
+    "mapbox-gl": "^3.17.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.0"

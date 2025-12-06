@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../supabaseClient'
 import { formatarHora, getIniciais } from '../utils/formatters'
+import { useGeolocation } from '../hooks/useGeolocation'
 import {
   ViagemCard,
   CalendarioMensal,
@@ -151,6 +152,12 @@ function MotoristaApp() {
         break
       case 'em_andamento':
         updateData.timestamp_passageiro_embarcou = agora
+        // Captura localizacao de INICIO da viagem
+        try {
+          await updateViagemLocation('inicio', viagemId)
+        } catch (err) {
+          console.warn('Nao foi possivel capturar localizacao de inicio:', err)
+        }
         break
     }
 
@@ -248,6 +255,35 @@ function MotoristaApp() {
     viagens.find(v => ['a_caminho', 'aguardando_passageiro', 'em_andamento'].includes(v.status)),
     [viagens]
   )
+
+  // Hook de geolocalizacao - rastreia durante viagem em andamento
+  const {
+    location: localizacaoAtual,
+    endereco: enderecoAtual,
+    isTracking,
+    isLeader,
+    startTracking,
+    stopTracking,
+    updateViagemLocation,
+    loading: loadingLocalizacao,
+    error: erroLocalizacao
+  } = useGeolocation({
+    motoristaId: perfil?.motorista_id,
+    viagemId: viagemAtual?.id,
+    intervalo: 60000, // 60 segundos
+    autoStart: false
+  })
+
+  // Inicia/para rastreamento baseado no status da viagem
+  useEffect(() => {
+    if (viagemAtual?.status === 'em_andamento' && !isTracking && isLeader) {
+      startTracking()
+    } else if (!viagemAtual || viagemAtual.status !== 'em_andamento') {
+      if (isTracking) {
+        stopTracking()
+      }
+    }
+  }, [viagemAtual, isTracking, isLeader, startTracking, stopTracking])
   const proximasViagens = useMemo(() =>
     viagens.filter(v => v.status === 'vinculada'),
     [viagens]
@@ -642,6 +678,7 @@ function MotoristaApp() {
           perfilNome={perfil.nome}
           onClose={() => setModalConfirmacao(null)}
           onSucesso={carregarViagensDia}
+          onCapturaLocalizacaoFim={(viagemId) => updateViagemLocation('fim', viagemId)}
         />
       )}
 

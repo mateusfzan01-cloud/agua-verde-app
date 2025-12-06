@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { useParams } from 'react-router-dom'
 import { getIniciais } from '../utils/formatters'
 import { supabase } from '../supabaseClient'
 import AvaliacaoViagem from './AvaliacaoViagem'
 import StarRating from './StarRating'
+
+// Lazy load do mapa para melhor performance
+const MapaRastreamento = lazy(() => import('./MapaRastreamento'))
 
 function AcompanharViagem() {
   const { token } = useParams()
@@ -385,8 +388,8 @@ function AcompanharViagem() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               {viagem.motoristas.foto_url ? (
-                <img 
-                  src={viagem.motoristas.foto_url} 
+                <img
+                  src={viagem.motoristas.foto_url}
                   alt={viagem.motoristas.nome}
                   style={{
                     width: 60,
@@ -420,7 +423,7 @@ function AcompanharViagem() {
                   </div>
                 )}
                 {viagem.motoristas.placa && (
-                  <div style={{ 
+                  <div style={{
                     display: 'inline-block',
                     marginTop: 8,
                     padding: '4px 12px',
@@ -435,6 +438,40 @@ function AcompanharViagem() {
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Mapa de Rastreamento - durante viagem ativa */}
+        {viagem.motoristas && ['a_caminho', 'aguardando_passageiro', 'em_andamento'].includes(viagem.status) && (
+          <div style={{
+            background: 'white',
+            borderRadius: 16,
+            padding: 20,
+            marginBottom: 16,
+            boxShadow: '0 2px 10px rgba(0,0,0,0.08)'
+          }}>
+            <h2 style={{ margin: '0 0 16px', fontSize: 16, color: '#333' }}>
+              📍 Localizacao do Motorista
+            </h2>
+            <Suspense fallback={
+              <div style={{
+                height: 300,
+                background: '#f5f5f5',
+                borderRadius: 12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#666'
+              }}>
+                Carregando mapa...
+              </div>
+            }>
+              <MapaRastreamento
+                viagemId={viagem.id}
+                motoristaId={viagem.motoristas.id}
+                height={300}
+              />
+            </Suspense>
           </div>
         )}
 

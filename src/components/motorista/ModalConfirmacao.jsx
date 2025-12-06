@@ -1,7 +1,7 @@
 import { useState, memo } from 'react'
 import { supabase } from '../../supabaseClient'
 
-const ModalConfirmacao = memo(function ModalConfirmacao({ viagem, perfilNome, onClose, onSucesso }) {
+const ModalConfirmacao = memo(function ModalConfirmacao({ viagem, perfilNome, onClose, onSucesso, onCapturaLocalizacaoFim }) {
   const [dadosConfirmacao, setDadosConfirmacao] = useState({
     passageiros: viagem.quantidade_passageiros || 1,
     bagagens_grandes: viagem.bagagens_grandes || 0,
@@ -24,6 +24,15 @@ const ModalConfirmacao = memo(function ModalConfirmacao({ viagem, perfilNome, on
     if (dadosConfirmacao.horario_chegada) {
       const [h, m] = dadosConfirmacao.horario_chegada.split(':')
       horarioChegada = new Date(dataBase.getFullYear(), dataBase.getMonth(), dataBase.getDate(), parseInt(h), parseInt(m))
+    }
+
+    // Captura localizacao de FIM da viagem
+    if (onCapturaLocalizacaoFim) {
+      try {
+        await onCapturaLocalizacaoFim(viagem.id)
+      } catch (err) {
+        console.warn('Nao foi possivel capturar localizacao de fim:', err)
+      }
     }
 
     const { error } = await supabase
