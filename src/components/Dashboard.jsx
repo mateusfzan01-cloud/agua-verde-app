@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import AlertasPanel from './AlertasPanel'
+import MapaMotoristas from './MapaMotoristas'
 import { formatarHora, getIniciais, formatarStatus } from '../utils/formatters'
 
 function Dashboard() {
@@ -61,7 +62,37 @@ function Dashboard() {
     setLoading(false)
   }
 
+  // Subscription para atualizacoes em tempo real
+  useEffect(() => {
+    const channel = supabase
+      .channel('dashboard-viagens-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'viagens'
+        },
+        (payload) => {
+          console.log('Viagem atualizada:', payload)
+          // Recarregar dados quando houver mudanca
+          fetchData()
+        }
+      )
+      .subscribe()
 
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  // Filtrar viagens ativas (com motorista em deslocamento ou em viagem)
+  const viagensAtivas = useMemo(() => {
+    return viagens.filter(v =>
+      ['a_caminho', 'aguardando_passageiro', 'em_andamento'].includes(v.status) &&
+      v.motorista_id
+    )
+  }, [viagens])
 
   function getStatusClass(status) {
     return `status-badge status-${status}`
@@ -151,6 +182,21 @@ function Dashboard() {
           <div className="stat-value">{stats.concluidas}</div>
         </div>
       </div>
+
+      {/* Mapa de Motoristas em Tempo Real */}
+      {viagensAtivas.length > 0 && (
+        <div className="card" style={{ marginBottom: '24px' }}>
+          <div className="card-header">
+            <h2 className="card-title">📍 Motoristas em Tempo Real</h2>
+            <span style={{ fontSize: '12px', color: 'var(--cinza-texto)' }}>
+              {viagensAtivas.length} viagem(ns) ativa(s)
+            </span>
+          </div>
+          <div style={{ padding: '0' }}>
+            <MapaMotoristas viagensAtivas={viagensAtivas} height="350px" />
+          </div>
+        </div>
+      )}
 
       {/* Content Grid */}
       <div className="content-grid">

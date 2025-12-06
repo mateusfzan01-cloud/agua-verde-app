@@ -6,6 +6,14 @@
 // Token do Mapbox - em producao, usar variavel de ambiente
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'YOUR_MAPBOX_TOKEN'
 
+/**
+ * Retorna o token do Mapbox configurado nas variaveis de ambiente
+ * @returns {string} Token do Mapbox
+ */
+export function getMapboxToken() {
+  return MAPBOX_TOKEN
+}
+
 // Cache de geocoding para reduzir chamadas a API
 // Chave: lat_lng com 4 decimais, Valor: endereco
 const geocodeCache = new Map()
@@ -229,6 +237,7 @@ export function getCacheStats() {
 }
 
 export default {
+  getMapboxToken,
   reverseGeocode,
   gerarMapaEstatico,
   calcularDistancia,
